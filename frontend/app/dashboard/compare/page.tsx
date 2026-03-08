@@ -14,6 +14,7 @@ import SelectUnitsModal from "./SelectUnitsModal";
 const CARD_WIDTH = "w-52";
 
 const FEATURES = [
+  { id: "price", label: "Price" },
   { id: "bedrooms", label: "Bedrooms" },
   { id: "bathrooms", label: "Bathrooms" },
   { id: "sq_ft", label: "Floor Area" },
