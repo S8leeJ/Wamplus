@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 
+const inputBase =
+  'w-full rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-zinc-900 placeholder-zinc-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+
 export default function AddUnitPage() {
   const [apartmentName, setApartmentName] = useState('')
   const [roomType, setRoomType] = useState('')
@@ -18,169 +21,186 @@ export default function AddUnitPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900">Add unit</h1>
+    <div className="-m-6 flex min-h-[calc(100vh-3.5rem-3rem)] flex-1 flex-col p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-primary-800">
+          Add Unit
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Add a new unit to the WAMP+ database.
+        </p>
+      </header>
+
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm"
+        className="mx-auto w-full max-w-xl"
       >
-        <div>
-          <label
-            htmlFor="apartmentName"
-            className="mb-1 block text-sm font-medium text-zinc-700"
-          >
-            Apartment name
-          </label>
-          <input
-            id="apartmentName"
-            type="text"
-            value={apartmentName}
-            onChange={(e) => setApartmentName(e.target.value)}
-            placeholder="e.g. 26 West"
-            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-          />
-        </div>
-
-        <div className="border-t border-zinc-200 pt-4">
-          <h2 className="mb-3 text-sm font-medium text-zinc-700">Unit specs</h2>
-          <div className="space-y-4">
-            <div>
+        <div className="rounded-2xl border border-primary-200 bg-white shadow-sm">
+          <div className="border-b border-primary-100 px-6 py-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-600">
+              Apartment
+            </h2>
+            <div className="mt-4">
               <label
-                htmlFor="roomType"
-                className="mb-1 block text-sm text-zinc-600"
+                htmlFor="apartmentName"
+                className="mb-1.5 block text-sm font-medium text-zinc-700"
               >
-                Room type
+                Apartment name
               </label>
               <input
-                id="roomType"
+                id="apartmentName"
                 type="text"
-                value={roomType}
-                onChange={(e) => setRoomType(e.target.value)}
-                placeholder="e.g. 2B/2B A"
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="bedrooms"
-                  className="mb-1 block text-sm text-zinc-600"
-                >
-                  Bedrooms
-                </label>
-                <input
-                  id="bedrooms"
-                  type="number"
-                  min={0}
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="bathrooms"
-                  className="mb-1 block text-sm text-zinc-600"
-                >
-                  Bathrooms
-                </label>
-                <input
-                  id="bathrooms"
-                  type="number"
-                  min={0}
-                  step={0.5}
-                  value={bathrooms}
-                  onChange={(e) => setBathrooms(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="sqFt"
-                  className="mb-1 block text-sm text-zinc-600"
-                >
-                  Sq ft
-                </label>
-                <input
-                  id="sqFt"
-                  type="number"
-                  min={0}
-                  value={sqFt}
-                  onChange={(e) => setSqFt(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="floor"
-                  className="mb-1 block text-sm text-zinc-600"
-                >
-                  Floor
-                </label>
-                <input
-                  id="floor"
-                  type="number"
-                  min={0}
-                  value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="windows"
-                className="mb-1 block text-sm text-zinc-600"
-              >
-                Windows
-              </label>
-              <input
-                id="windows"
-                type="text"
-                value={windows}
-                onChange={(e) => setWindows(e.target.value)}
-                placeholder="e.g. East, South"
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="price"
-                className="mb-1 block text-sm text-zinc-600"
-              >
-                Price (monthly rent)
-              </label>
-              <input
-                id="price"
-                type="number"
-                min={0}
-                step={1}
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="e.g. 1500"
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                value={apartmentName}
+                onChange={(e) => setApartmentName(e.target.value)}
+                placeholder="e.g. 26 West"
+                className={inputBase}
               />
             </div>
           </div>
-        </div>
 
-        <div className="pt-4">
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-          >
-            Submit
-          </button>
+          <div className="border-b border-primary-100 px-6 py-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-600">
+              Unit details
+            </h2>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label
+                  htmlFor="roomType"
+                  className="mb-1.5 block text-sm font-medium text-zinc-700"
+                >
+                  Room type / layout
+                </label>
+                <input
+                  id="roomType"
+                  type="text"
+                  value={roomType}
+                  onChange={(e) => setRoomType(e.target.value)}
+                  placeholder="e.g. 2B/2B A"
+                  className={inputBase}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="bedrooms"
+                    className="mb-1.5 block text-sm font-medium text-zinc-700"
+                  >
+                    Bedrooms
+                  </label>
+                  <input
+                    id="bedrooms"
+                    type="number"
+                    min={0}
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    placeholder="0"
+                    className={inputBase}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="bathrooms"
+                    className="mb-1.5 block text-sm font-medium text-zinc-700"
+                  >
+                    Bathrooms
+                  </label>
+                  <input
+                    id="bathrooms"
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                    placeholder="0"
+                    className={inputBase}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="sqFt"
+                    className="mb-1.5 block text-sm font-medium text-zinc-700"
+                  >
+                    Sq ft
+                  </label>
+                  <input
+                    id="sqFt"
+                    type="number"
+                    min={0}
+                    value={sqFt}
+                    onChange={(e) => setSqFt(e.target.value)}
+                    placeholder="0"
+                    className={inputBase}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="floor"
+                    className="mb-1.5 block text-sm font-medium text-zinc-700"
+                  >
+                    Floor
+                  </label>
+                  <input
+                    id="floor"
+                    type="number"
+                    min={0}
+                    value={floor}
+                    onChange={(e) => setFloor(e.target.value)}
+                    placeholder="0"
+                    className={inputBase}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="windows"
+                  className="mb-1.5 block text-sm font-medium text-zinc-700"
+                >
+                  Windows
+                </label>
+                <input
+                  id="windows"
+                  type="text"
+                  value={windows}
+                  onChange={(e) => setWindows(e.target.value)}
+                  placeholder="e.g. East, South"
+                  className={inputBase}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="price"
+                  className="mb-1.5 block text-sm font-medium text-zinc-700"
+                >
+                  Price (monthly rent)
+                </label>
+                <input
+                  id="price"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className={inputBase}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-5">
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-primary-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+            >
+              Submit
+            </button>
+          </div>
         </div>
       </form>
     </div>

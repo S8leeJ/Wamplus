@@ -20,7 +20,7 @@ export default async function DashboardApartmentsPage() {
 
   const { data: apartments, error: apartmentsError } = await supabase
     .from("apartments")
-    .select("id, name, image_url")
+    .select("id, name, image_url, address, website")
     .order("name");
 
   if (apartmentsError) {
@@ -29,18 +29,6 @@ export default async function DashboardApartmentsPage() {
       <div className="p-4 text-red-500">Error loading apartments</div>
     );
   }
-
-  const { data: favorites, error: favoritesError } = await supabase
-    .from("favorites")
-    .select("apartment_id")
-    .eq("user_id", user.id)
-    .is("unit_id", null);
-
-  if (favoritesError) {
-    console.error("Error fetching favorites:", favoritesError);
-  }
-
-  const starredIds = new Set(favorites?.map((f) => f.apartment_id) ?? []);
 
   const compareItems = await getCompareItems();
   const apartmentIdsInCompare = new Set(
@@ -53,11 +41,11 @@ export default async function DashboardApartmentsPage() {
   return (
     <div className="-m-6 flex min-h-[calc(100vh-3.5rem-3rem)] flex-1 flex-col bg-zinc-50 p-6">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+        <h1 className="text-2xl font-bold tracking-tight text-primary-900">
           Apartments
         </h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Browse buildings, star favorites, and add units to compare.
+          Browse buildings and add units to compare.
         </p>
       </header>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -65,7 +53,6 @@ export default async function DashboardApartmentsPage() {
           <ApartmentCard
             key={apartment.id}
             apartment={apartment}
-            initialIsStarred={starredIds.has(apartment.id)}
             isInCompare={apartmentIdsInCompare.has(apartment.id)}
             compareKeys={compareKeys}
           />

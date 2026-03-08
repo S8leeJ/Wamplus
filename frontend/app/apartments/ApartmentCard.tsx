@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { addToFavorites, removeFromFavorites } from './actions'
+import Link from 'next/link'
 import ApartmentUnitsList from './ApartmentUnitsList'
 
 interface ApartmentCardProps {
@@ -10,36 +10,19 @@ interface ApartmentCardProps {
     id: string
     name: string
     image_url?: string | null
+    address?: string | null
+    website?: string | null
   }
-  initialIsStarred: boolean
   isInCompare: boolean
   compareKeys: string[]
 }
 
 export default function ApartmentCard({
   apartment,
-  initialIsStarred,
   isInCompare,
   compareKeys,
 }: ApartmentCardProps) {
-  const [isStarred, setIsStarred] = useState(initialIsStarred)
   const [expanded, setExpanded] = useState(false)
-
-  const toggleStarred = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const newState = !isStarred
-    setIsStarred(newState)
-    try {
-      if (newState) {
-        await addToFavorites(apartment.id)
-      } else {
-        await removeFromFavorites(apartment.id)
-      }
-    } catch (error) {
-      setIsStarred(!newState)
-      console.error('Error toggling favorite:', error)
-    }
-  }
 
   return (
     <article
@@ -84,76 +67,13 @@ export default function ApartmentCard({
           )}
         </div>
         {/* Badges overlay */}
-        <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
-          {(isInCompare || isStarred) && (
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
-              {isInCompare && (
-                <span className="inline-flex items-center justify-center rounded-full bg-amber-500/95 px-2.5 py-1 text-xs font-medium leading-none text-white shadow-sm">
-                  In compare
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={toggleStarred}
-                className="rounded-full p-1.5 shadow-sm transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                aria-label={isStarred ? 'Unstar apartment' : 'Star apartment'}
-              >
-                {isStarred ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5 text-amber-400 drop-shadow-sm"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="h-5 w-5 text-white drop-shadow-md"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-          )}
-          {!isStarred && !isInCompare && (
-            <button
-              type="button"
-              onClick={toggleStarred}
-              className="rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-              aria-label="Star apartment"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-5 w-5 text-zinc-600"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
+        {isInCompare && (
+          <div className="absolute right-3 top-3">
+            <span className="inline-flex items-center justify-center rounded-full bg-amber-500/95 px-2.5 py-1 text-xs font-medium leading-none text-white shadow-sm">
+              In compare
+            </span>
+          </div>
+        )}
       </button>
 
       {/* Content */}
@@ -190,11 +110,63 @@ export default function ApartmentCard({
       </div>
 
       {expanded && (
-        <ApartmentUnitsList
-          apartmentId={apartment.id}
-          apartmentName={apartment.name}
-          compareKeys={compareKeys}
-        />
+        <>
+          {(apartment.address || apartment.website) && (
+          <div className="border-t border-zinc-200 bg-zinc-50/60 px-4 py-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Details
+            </p>
+            <dl className="space-y-2 text-sm">
+              {apartment.address && (
+                <div className="flex flex-wrap items-start gap-2">
+                  <div className="flex min-w-0 flex-1 gap-3">
+                    <span className="flex shrink-0 items-center gap-1.5 text-zinc-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                        <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clipRule="evenodd" />
+                      </svg>
+                      Address
+                    </span>
+                    <span className="text-zinc-800">{apartment.address}</span>
+                  </div>
+                  <Link
+                    href={`/dashboard/map?apartmentId=${apartment.id}`}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 hover:border-zinc-400"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                      <path fillRule="evenodd" d="M8.157 2.175a1.5 1.5 0 011.686 0l5.25 3.5a1.5 1.5 0 01.525 2.06l-2.432 4.85a1.5 1.5 0 01-.665.665l-4.85 2.432a1.5 1.5 0 01-2.06-.525l-3.5-5.25a1.5 1.5 0 010-1.686l5.25-3.5z" clipRule="evenodd" />
+                    </svg>
+                    View on map
+                  </Link>
+                </div>
+              )}
+              {apartment.website && (
+                <div className="flex gap-3">
+                  <span className="flex shrink-0 items-center gap-1.5 text-zinc-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                      <path d="M12.232 4.232a2.5 2.5 0 013.536 3.536l-1.225 1.224a.75.75 0 001.061 1.06l1.224-1.224a4 4 0 00-5.656-5.656l-3 3a4 4 0 00.225 5.865.75.75 0 00.977-1.138 2.5 2.5 0 01-.142-3.667l3-3z" />
+                      <path d="M11.603 7.963a.75.75 0 00-.977 1.138 2.5 2.5 0 01.142 3.667l-3 3a2.5 2.5 0 01-3.536-3.536l1.225-1.224a.75.75 0 00-1.061-1.06l-1.224 1.224a4 4 0 105.656 5.656l3-3a4 4 0 00-.225-5.865z" />
+                    </svg>
+                    Website
+                  </span>
+                  <a
+                    href={apartment.website.startsWith('http') ? apartment.website : `https://${apartment.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 underline hover:text-primary-700"
+                  >
+                    {apartment.website.replace(/^https?:\/\//, '')}
+                  </a>
+                </div>
+              )}
+            </dl>
+          </div>
+          )}
+          <ApartmentUnitsList
+            apartmentId={apartment.id}
+            apartmentName={apartment.name}
+            compareKeys={compareKeys}
+          />
+        </>
       )}
     </article>
   )

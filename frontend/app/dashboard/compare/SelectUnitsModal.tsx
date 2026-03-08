@@ -98,8 +98,8 @@ export default function SelectUnitsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3">
-          <h2 id="select-units-title" className="text-lg font-semibold text-zinc-900">
-            Select a unit to add
+          <h2 id="select-units-title" className="text-lg font-semibold text-primary-900">
+             Select Units to Compare
           </h2>
           <button
             type="button"
@@ -196,10 +196,17 @@ export default function SelectUnitsModal({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-zinc-200 px-4 py-3">
-          <p className="text-center text-xs text-zinc-500">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-zinc-200 px-4 py-3">
+          <p className="text-xs text-zinc-500">
             Click a unit to add it to the compare page
           </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600"
+          >
+            Done
+          </button>
         </div>
       </div>
     </div>

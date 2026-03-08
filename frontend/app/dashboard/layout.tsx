@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "../login/actions";
+import NavLinks from "./NavLinks";
 
 export default function DashboardLayout({
   children,
@@ -7,41 +8,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50">
-      <nav className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-9xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6">
+    <div className="flex min-h-screen flex-col bg-white">
+      <nav className="border-b border-primary-200 bg-primary-300">
+        <div className="mx-auto flex h-18 max-w-9xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-8">
             <Link
               href="/dashboard"
-              className="text-lg font-semibold text-zinc-900"
+              className="text-3xl font-light tracking-tight text-primary-700"
             >
               WAMP+
             </Link>
-            <div className="flex gap-4">
-              <Link
-                href="/dashboard/apartments"
-                className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
-              >
-                Apartments
-              </Link>
-              <Link
-                href="/dashboard/compare"
-                className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
-              >
-                Compare
-              </Link>
-              <Link
-                href="/dashboard/map"
-                className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
-              >
-                Wampus Map
-              </Link>
-            </div>
+            <NavLinks />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link
               href="/dashboard/add-unit"
-              className="rounded-full p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
               aria-label="Add unit"
             >
               <svg
@@ -59,7 +41,7 @@ export default function DashboardLayout({
             </Link>
             <Link
               href="/dashboard/notifications"
-              className="rounded-full p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+              className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
               aria-label="Notifications"
             >
               <svg
@@ -78,7 +60,7 @@ export default function DashboardLayout({
             <form action={signOut}>
               <button
                 type="submit"
-                className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
+                className="text-sm font-medium text-zinc-600 transition-colors hover:text-primary-700"
               >
                 Sign out
               </button>

@@ -40,37 +40,52 @@ const FAKE_NOTIFICATIONS = [
 
 export default function NotificationsPage() {
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900">Notifications</h1>
-      <ul className="space-y-1">
-        {FAKE_NOTIFICATIONS.map((n) => (
-          <li
-            key={n.id}
-            className={`rounded-lg border p-4 ${
-              n.read
-                ? "border-zinc-200 bg-white"
-                : "border-zinc-200 bg-zinc-50"
-            }`}
-          >
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <p
-                  className={`text-sm font-medium ${
-                    n.read ? "text-zinc-700" : "text-zinc-900"
-                  }`}
-                >
-                  {n.title}
-                </p>
-                <p className="mt-0.5 text-sm text-zinc-500">{n.message}</p>
-                <p className="mt-1 text-xs text-zinc-400">{n.time}</p>
+    <div className="-m-6 flex min-h-[calc(100vh-3.5rem-3rem)] flex-1 flex-col p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-primary-800">
+          Notifications
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          Updates and reminders for your apartment search.
+        </p>
+      </header>
+
+      <div className="mx-auto w-full max-w-2xl">
+        <ul className="space-y-3">
+          {FAKE_NOTIFICATIONS.map((n) => (
+            <li
+              key={n.id}
+              className={`rounded-xl border transition-shadow ${
+                n.read
+                  ? "border-primary-200 bg-white"
+                  : "border-primary-200 bg-white shadow-sm ring-1 ring-primary-200"
+              }`}
+            >
+              <div className="flex gap-4 p-5">
+                <div className="flex w-6 shrink-0 items-start justify-center pt-0.5">
+                  {!n.read && (
+                    <span
+                      className="h-2.5 w-2.5 rounded-full bg-primary-600"
+                      aria-hidden
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-sm font-medium ${
+                      n.read ? "text-zinc-600" : "text-primary-900"
+                    }`}
+                  >
+                    {n.title}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-500">{n.message}</p>
+                  <p className="mt-2 text-xs text-zinc-400">{n.time}</p>
+                </div>
               </div>
-              {!n.read && (
-                <span className="h-2 w-2 shrink-0 rounded-full bg-zinc-800" />
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -79,7 +79,7 @@ export default function AddApartmentsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3">
-          <h2 id="add-apartments-title" className="text-lg font-semibold text-zinc-900">
+          <h2 id="add-apartments-title" className="text-lg font-bold text-primary-900">
             Choose Apartment Building
           </h2>
           <button
@@ -172,7 +172,7 @@ export default function AddApartmentsModal({
             type="button"
             onClick={handleSubmit}
             disabled={selectedIds.size === 0}
-            className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-primary-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Next: Select units ({selectedIds.size})
           </button>

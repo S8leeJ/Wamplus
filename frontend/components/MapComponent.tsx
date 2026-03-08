@@ -33,8 +33,10 @@ function escapeHtml(s: string): string {
 
 export default function MapComponent({
   apartments = [],
+  initialFlyTo,
 }: {
   apartments?: MapApartment[];
+  initialFlyTo?: string;
 }) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -116,8 +118,8 @@ export default function MapComponent({
       bounceTimeout = setTimeout(checkBounds, 150);
     });
 
-    const fetchBuildings = async (targetBounds: LngLatBounds) => {
-      if (!map.current) return;
+    const fetchBuildings = async (targetBounds: LngLatBounds): Promise<GeoJSON.Feature[]> => {
+      if (!map.current) return [];
       setLoading(true);
 
       let w: number, s: number, e: number, n: number;
@@ -193,14 +195,15 @@ export default function MapComponent({
         } catch (error) {
           console.error("Error fetching buildings:", error);
           setLoading(false);
-          return;
+          return [];
         }
       }
 
+      let validBuildings: GeoJSON.Feature[] = [];
       try {
         const geojson = osmtogeojson(data) as GeoJSON.FeatureCollection;
 
-        const validBuildings = geojson.features.filter(
+        validBuildings = geojson.features.filter(
           (f) =>
             (f.properties?.building || f.properties?.["building:part"]) &&
             (f.geometry?.type === "Polygon" || f.geometry?.type === "MultiPolygon")
@@ -273,7 +276,7 @@ export default function MapComponent({
               "fill-extrusion-color": [
                 "case",
                 ["boolean", ["get", "isTarget"], false],
-                "#F2C94C",
+                "#5C6596",
                 "#d9d9d9",
               ],
               "fill-extrusion-height": ["get", "renderHeight"],
@@ -313,9 +316,11 @@ export default function MapComponent({
         }
       } catch (error) {
         console.error("Error processing buildings:", error);
+        return [];
       } finally {
         setLoading(false);
       }
+      return validBuildings;
     };
 
     const createPopupContent = (
@@ -375,7 +380,55 @@ export default function MapComponent({
 
     map.current.on("load", async () => {
       await fetchBuildings(map.current!.getBounds());
-      fetchBuildings(MAP_BOUNDS);
+      // Load all buildings in map bounds so we can find the right one
+      const buildings = await fetchBuildings(MAP_BOUNDS);
+
+      // Fly to specific apartment: use same OSM building centroid as when clicking
+      if (initialFlyTo && buildings.length > 0) {
+        const aptLower = initialFlyTo.toLowerCase().trim();
+        const match = buildings.find((f) => {
+          const bn = String((f.properties?.name as string) ?? "").toLowerCase();
+          if (!bn) return false;
+          return bn.includes(aptLower) || aptLower.includes(bn);
+        });
+        const exact = buildings.find(
+          (f) => String((f.properties?.name as string) ?? "").toLowerCase() === aptLower
+        );
+        const feature = exact ?? match;
+        if (feature) {
+          const centerPoint = centroid(feature as GeoJSON.Feature);
+          const coords = centerPoint.geometry.coordinates as [number, number];
+          map.current!.flyTo({
+            center: coords,
+            zoom: 18,
+            pitch: 60,
+            bearing: -17,
+            speed: 0.5,
+            curve: 1,
+            essential: true,
+          });
+        } else {
+          // Fallback to TARGET_BUILDINGS if no OSM building matches
+          const search = aptLower.replace(/\s+/g, " ");
+          const target = TARGET_BUILDINGS.find(
+            (b) =>
+              b.name.toLowerCase() === search ||
+              b.name.toLowerCase().includes(search) ||
+              search.includes(b.name.toLowerCase())
+          );
+          if (target) {
+            map.current!.flyTo({
+              center: target.coords,
+              zoom: 18,
+              pitch: 60,
+              bearing: -17,
+              speed: 0.5,
+              curve: 1,
+              essential: true,
+            });
+          }
+        }
+      }
     });
 
     map.current.on("click", "3d-buildings", (e) => {
@@ -434,14 +487,14 @@ export default function MapComponent({
         className="absolute left-5 top-5 z-10 max-w-[300px] rounded-lg bg-white p-4 shadow-lg"
         style={{ zIndex: 10 }}
       >
-        <h2 className="mb-2.5 text-lg font-semibold">UT Austin Map</h2>
+        <h2 className="mb-2.5 text-lg font-semibold text-primary-900">UT Austin Map</h2>
         <div className="mb-2.5">
-          <label className="mb-1 block text-xs text-zinc-600">
+          <label className="mb-1 block text-xs text-primary-900">
             Fly to Building:
           </label>
           <select
             onChange={handleSearchSelect}
-            className="w-full rounded border border-zinc-300 px-2 py-1.5"
+              className="w-full rounded border text-primary-900 px-2 py-1.5"
           >
             <option value="">Select a destination...</option>
             {TARGET_BUILDINGS.map((b, i) => (
