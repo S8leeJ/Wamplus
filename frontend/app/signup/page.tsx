@@ -1,71 +1,108 @@
 import Link from "next/link";
 import { signup } from "../login/actions";
 
+const inputClass =
+  "w-full rounded-xl border border-stone-300 bg-white px-5 py-3.5 text-base text-slate-900 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
 export default async function SignupPage(props: {
   searchParams: Promise<{ message?: string; error?: string }>;
 }) {
   const searchParams = await props.searchParams;
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 py-2">
-      <div className="flex w-full max-w-md flex-col gap-2 rounded-lg border border-zinc-200 bg-white px-8 py-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-zinc-900">Sign Up</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 px-4 py-8">
+      <div className="flex w-full max-w-md flex-col gap-6 rounded-2xl border border-stone-200 bg-white px-10 py-10 shadow-lg sm:px-12 sm:py-12">
+        <h1 className="text-3xl font-bold tracking-tight text-indigo-900 sm:text-4xl">
+          Sign Up
+        </h1>
         {searchParams?.message && (
-          <p className="mt-4 bg-zinc-100 p-4 text-center text-zinc-700">
+          <p className="rounded-xl bg-stone-100 px-5 py-4 text-base font-medium text-slate-700">
             {searchParams.message}
           </p>
         )}
         {searchParams?.error && (
-          <p className="mt-4 bg-red-50 p-4 text-center text-red-600">
+          <p className="rounded-xl bg-red-50 px-5 py-4 text-base font-semibold text-red-700">
             {searchParams.error}
           </p>
         )}
-        <form className="flex w-full flex-1 flex-col gap-2 text-zinc-900">
-          <label className="text-md font-medium text-zinc-700" htmlFor="first_name">
-            First Name
-          </label>
-          <input
-            className="mb-6 rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 placeholder:text-zinc-500 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-            name="first_name"
-            placeholder="John"
-            required
-          />
-          <label className="text-md font-medium text-zinc-700" htmlFor="last_name">
-            Last Name
-          </label>
-          <input
-            className="mb-6 rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 placeholder:text-zinc-500 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-            name="last_name"
-            placeholder="Doe"
-            required
-          />
-          <label className="text-md font-medium text-zinc-700" htmlFor="email">
-            Email
-          </label>
-          <input
-            className="mb-6 rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 placeholder:text-zinc-500 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-            name="email"
-            placeholder="you@example.com"
-            required
-          />
-          <label className="text-md font-medium text-zinc-700" htmlFor="password">
-            Password
-          </label>
-          <input
-            className="mb-6 rounded-md border border-zinc-300 bg-white px-4 py-2 text-zinc-900 placeholder:text-zinc-500 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-            type="password"
-            name="password"
-            placeholder="••••••••"
-            required
-          />
+        <form className="flex flex-col gap-6 text-slate-900" action={signup}>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                className="block text-base font-semibold text-slate-700"
+                htmlFor="first_name"
+              >
+                First Name
+              </label>
+              <input
+                id="first_name"
+                name="first_name"
+                type="text"
+                placeholder="John"
+                required
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                className="block text-base font-semibold text-slate-700"
+                htmlFor="last_name"
+              >
+                Last Name
+              </label>
+              <input
+                id="last_name"
+                name="last_name"
+                type="text"
+                placeholder="Doe"
+                required
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label
+              className="block text-base font-semibold text-slate-700"
+              htmlFor="email"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              required
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-2">
+            <label
+              className="block text-base font-semibold text-slate-700"
+              htmlFor="password"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              required
+              className={inputClass}
+            />
+          </div>
           <button
-            formAction={signup}
-            className="mb-2 rounded-md bg-zinc-800 px-4 py-2 text-white hover:bg-zinc-700"
+            type="submit"
+            className="mt-2 w-full rounded-xl bg-indigo-900 px-6 py-4 text-lg font-bold text-white transition-colors hover:bg-indigo-800"
           >
             Sign Up
           </button>
-          <p className="mt-2 text-center text-sm text-zinc-600">
+          <p className="text-center text-base font-medium text-slate-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-zinc-900 underline hover:text-zinc-700">
+            <Link
+              href="/login"
+              className="font-bold text-indigo-900 underline decoration-2 underline-offset-2 hover:text-indigo-700"
+            >
               Sign in
             </Link>
           </p>
