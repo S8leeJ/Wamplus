@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getCompareItems } from "@/app/dashboard/compare/actions";
-import ApartmentCard from "@/app/apartments/ApartmentCard";
+import ApartmentsListWithSearch from "./ApartmentsListWithSearch";
 
 function compareKey(apartmentId: string, unitId: string) {
   return `${apartmentId}:${unitId}`;
@@ -20,7 +20,7 @@ export default async function DashboardApartmentsPage() {
 
   const { data: apartments, error: apartmentsError } = await supabase
     .from("apartments")
-    .select("id, name, image_url, address, website")
+    .select("id, name, image_url, address, website, rating, reviews")
     .order("name");
 
   if (apartmentsError) {
@@ -48,24 +48,11 @@ export default async function DashboardApartmentsPage() {
           Browse buildings and add units to compare.
         </p>
       </header>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {apartments?.map((apartment) => (
-          <ApartmentCard
-            key={apartment.id}
-            apartment={apartment}
-            isInCompare={apartmentIdsInCompare.has(apartment.id)}
-            compareKeys={compareKeys}
-          />
-        ))}
-      </div>
-      {apartments?.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white py-16 text-center">
-          <p className="text-zinc-500">No apartments found.</p>
-          <p className="mt-1 text-sm text-zinc-400">
-            Add apartments in the dashboard to see them here.
-          </p>
-        </div>
-      )}
+      <ApartmentsListWithSearch
+        apartments={apartments ?? []}
+        apartmentIdsInCompare={apartmentIdsInCompare}
+        compareKeys={compareKeys}
+      />
     </div>
   );
 }

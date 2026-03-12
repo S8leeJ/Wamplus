@@ -12,6 +12,8 @@ interface ApartmentCardProps {
     image_url?: string | null
     address?: string | null
     website?: string | null
+    rating?: number | null
+    reviews?: number | null
   }
   isInCompare: boolean
   compareKeys: string[]
@@ -111,12 +113,31 @@ export default function ApartmentCard({
 
       {expanded && (
         <>
-          {(apartment.address || apartment.website) && (
+          {(apartment.address || apartment.website || apartment.rating != null || apartment.reviews != null) && (
           <div className="border-t border-zinc-200 bg-zinc-50/60 px-4 py-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Details
             </p>
             <dl className="space-y-2 text-sm">
+              {(apartment.rating != null || apartment.reviews != null) && (
+                <div className="flex gap-3">
+                  <span className="flex shrink-0 items-center gap-1.5 text-zinc-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    Rating
+                  </span>
+                  <span className="text-zinc-800">
+                    {apartment.rating != null && (
+                      <span className="font-medium">{Number(apartment.rating).toFixed(1)}</span>
+                    )}
+                    {apartment.rating != null && apartment.reviews != null && ' · '}
+                    {apartment.reviews != null && (
+                      <span>{apartment.reviews.toLocaleString()} reviews</span>
+                    )}
+                  </span>
+                </div>
+              )}
               {apartment.address && (
                 <div className="flex flex-wrap items-start gap-2">
                   <div className="flex min-w-0 flex-1 gap-3">
