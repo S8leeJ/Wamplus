@@ -14,7 +14,8 @@ export default function AddUnitPage() {
   const [floor, setFloor] = useState('')
   const [windows, setWindows] = useState('')
   const [price, setPrice] = useState('')
-
+  const [utilities, setUtilities] = useState('')
+  const [parking, setParking] = useState('')
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // No backend connection yet - form does nothing on submit
@@ -186,6 +187,42 @@ export default function AddUnitPage() {
                   step={1}
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className={inputBase}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="utilities"
+                  className="mb-1.5 block text-sm font-medium text-zinc-700"
+                >
+                  Utilities (monthly)
+                </label>
+                <input
+                  id="utilities"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={utilities}
+                  onChange={(e) => setUtilities(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className={inputBase}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="parking"
+                  className="mb-1.5 block text-sm font-medium text-zinc-700"
+                >
+                  Parking (monthly)
+                </label>
+                <input
+                  id="parking"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={parking}
+                  onChange={(e) => setParking(e.target.value)}
                   placeholder="e.g. 1500"
                   className={inputBase}
                 />
