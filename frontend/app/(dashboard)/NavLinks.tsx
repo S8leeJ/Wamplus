@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const LINKS = [
-  { href: '/dashboard/apartments', label: 'Apartments' },
-  { href: '/dashboard/compare', label: 'Compare' },
-  { href: '/dashboard/map', label: 'Wampus Map' },
+  { href: '/apartments', label: 'Apartments' },
+  { href: '/compare', label: 'Compare' },
+  { href: '/map', label: 'Wampus Map' },
 ]
 
 export default function NavLinks() {

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getUnitsByApartmentIds, addToCompare, type UnitWithApartment } from '@/app/dashboard/compare/actions'
+import { getUnitsByApartmentIds, addToCompare, type UnitWithApartment } from '@/app/(dashboard)/compare/actions'
 import { useRouter } from 'next/navigation'
 
 function unitKey(apartmentId: string, unitId: string) {
@@ -230,7 +230,7 @@ export default function ApartmentDetailModal({
                       <dd className="mt-1 flex flex-wrap items-start gap-2 text-zinc-800">
                         <span>{apartment.address}</span>
                         <Link
-                          href={`/dashboard/map?apartmentId=${apartment.id}`}
+                          href={`/map?apartmentId=${apartment.id}`}
                           className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
                         >
                           View on map

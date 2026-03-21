@@ -346,7 +346,7 @@ export default function MapComponent({
         content += `<p style="margin: 6px 0 0; font-size: 0.8rem; color: #888;">Height: ${escapeHtml(String(props.height))}m</p>`;
       }
       if (apartment) {
-        content += `<a href="/dashboard/apartments" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #2563eb; text-decoration: none;">View apartment →</a>`;
+        content += `<a href="/apartments" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #2563eb; text-decoration: none;">View apartment →</a>`;
       }
       content += `</div></div>`;
       return content;

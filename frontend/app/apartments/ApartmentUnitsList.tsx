@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getUnitsByApartmentIds, addToCompare } from '@/app/dashboard/compare/actions'
-import type { UnitWithApartment } from '@/app/dashboard/compare/actions'
+import { getUnitsByApartmentIds, addToCompare } from '@/app/(dashboard)/compare/actions'
+import type { UnitWithApartment } from '@/app/(dashboard)/compare/actions'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 

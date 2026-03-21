@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getCompareItems } from "@/app/dashboard/compare/actions";
+import { getCompareItems } from "@/app/(dashboard)/compare/actions";
 import ApartmentsListWithSearch from "./ApartmentsListWithSearch";
 
 function compareKey(apartmentId: string, unitId: string) {

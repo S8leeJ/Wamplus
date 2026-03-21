@@ -30,7 +30,7 @@ export default function LandingPage() {
           WAMP+
         </h1>
         <Link
-          href="/dashboard/compare"
+          href="/compare"
           className="rounded-full bg-indigo-900 px-10 py-4 text-xl font-bold text-white transition-colors hover:bg-indigo-800 sm:px-12 sm:py-5 sm:text-2xl"
         >
           Compare
@@ -165,7 +165,7 @@ export default function LandingPage() {
         {/* CTA */}
         <div className="flex flex-col items-center gap-6 pb-24">
           <Link
-            href="/dashboard/compare"
+            href="/compare"
             className="rounded-full bg-indigo-900 px-14 py-5 text-xl font-bold text-white transition-colors hover:bg-indigo-800 sm:px-16 sm:py-6 sm:text-2xl"
           >
             Compare Apartments

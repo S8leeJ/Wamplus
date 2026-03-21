@@ -15,7 +15,7 @@ export default function DashboardLayout({
         <div className="mx-auto flex h-18 max-w-9xl items-center justify-between gap-6 overflow-visible px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link
-              href="/dashboard"
+              href="/apartments"
               className="text-3xl font-light tracking-tight text-primary-700"
             >
               WAMP+
@@ -25,7 +25,7 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2">
             <AddUnitWithNotif />
             <Link
-              href="/dashboard/notifications"
+              href="/notifications"
               className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
               aria-label="Notifications"
             >

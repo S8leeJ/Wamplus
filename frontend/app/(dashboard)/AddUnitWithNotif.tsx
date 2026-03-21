@@ -23,7 +23,7 @@ export default function AddUnitWithNotif() {
   return (
     <div className="relative flex flex-col items-center">
       <Link
-        href="/dashboard/add-unit"
+        href="/add-unit"
         className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
         aria-label="Add unit"
       >

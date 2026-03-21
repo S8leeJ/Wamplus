@@ -56,7 +56,7 @@ export async function updateSession(request: NextRequest) {
     } else if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '') {
         // logged-in user on landing page -> redirect to dashboard
         const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
+        url.pathname = '/apartments'
         return NextResponse.redirect(url)
     }
 
