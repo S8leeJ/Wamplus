@@ -19,7 +19,7 @@ type LngLatBounds =
 export type MapApartment = {
   id: string;
   name: string;
-  image_url: string | null;
+  image_url?: string | null;
 };
 
 function escapeHtml(s: string): string {
