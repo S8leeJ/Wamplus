@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import ApartmentCard from '@/app/apartments/ApartmentCard'
+import ApartmentDetailModal from '@/app/apartments/ApartmentDetailModal'
 
 export type ApartmentForList = {
   id: string
@@ -25,6 +26,7 @@ export default function ApartmentsListWithSearch({
   compareKeys,
 }: ApartmentsListWithSearchProps) {
   const [search, setSearch] = useState('')
+  const [selectedApartment, setSelectedApartment] = useState<ApartmentForList | null>(null)
 
   const filteredApartments = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -34,6 +36,13 @@ export default function ApartmentsListWithSearch({
 
   return (
     <>
+      <ApartmentDetailModal
+        isOpen={selectedApartment != null}
+        onClose={() => setSelectedApartment(null)}
+        apartment={selectedApartment}
+        compareKeys={compareKeys}
+      />
+
       <div className="mb-6">
         <label htmlFor="apartment-search" className="sr-only">
           Search apartments
@@ -62,7 +71,7 @@ export default function ApartmentsListWithSearch({
             key={apartment.id}
             apartment={apartment}
             isInCompare={apartmentIdsInCompare.has(apartment.id)}
-            compareKeys={compareKeys}
+            onOpen={setSelectedApartment}
           />
         ))}
       </div>

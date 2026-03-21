@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { signOut } from "../login/actions";
+import AddUnitWithNotif from "./AddUnitWithNotif";
 import NavLinks from "./NavLinks";
+import SignOutButton from "./SignOutButton";
 
 export default function DashboardLayout({
   children,
@@ -9,8 +11,8 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <nav className="border-b border-primary-200 bg-primary-300">
-        <div className="mx-auto flex h-18 max-w-9xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+      <nav className="overflow-visible border-b border-primary-200 bg-primary-300">
+        <div className="mx-auto flex h-18 max-w-9xl items-center justify-between gap-6 overflow-visible px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link
               href="/dashboard"
@@ -21,27 +23,7 @@ export default function DashboardLayout({
             <NavLinks />
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/add-unit"
-              className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
-              aria-label="Add unit"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 13.5H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
-                />
-              </svg>
-
-            </Link>
+            <AddUnitWithNotif />
             <Link
               href="/dashboard/notifications"
               className="rounded-full p-2 text-zinc-500 transition-colors hover:bg-primary-50 hover:text-primary-700"
@@ -62,14 +44,12 @@ export default function DashboardLayout({
                 />
               </svg>
             </Link>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-primary-100 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                Sign out
-              </button>
-            </form>
+            <SignOutButton
+              action={signOut}
+              className="rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-primary-100 hover:text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              Sign out
+            </SignOutButton>
         </div>
       </div>
     </nav>

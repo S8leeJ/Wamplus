@@ -45,15 +45,34 @@ export default function SelectUnitsModal({
   onAddUnit,
 }: SelectUnitsModalProps) {
   const [units, setUnits] = useState<UnitWithApartment[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [addingId, setAddingId] = useState<string | null>(null)
+
+  const filteredUnits = units.filter((unit) => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return true
+    const layout = (unit.layout_name ?? '').toLowerCase()
+    const roomType = (unit.room_type ?? '').toLowerCase()
+    const aptName = (apartmentNames.get(unit.apartment_id) ?? '').toLowerCase()
+    const price = unit.monthly_rent != null ? String(unit.monthly_rent) : ''
+    const info = formatUnitInfo(unit).toLowerCase()
+    return (
+      layout.includes(q) ||
+      roomType.includes(q) ||
+      aptName.includes(q) ||
+      price.includes(q) ||
+      info.includes(q)
+    )
+  })
 
   const apartmentIdsKey = apartmentIds.join(',')
   useEffect(() => {
     if (isOpen && apartmentIds.length > 0) {
       setLoading(true)
       setError(null)
+      setSearchQuery('')
       getUnitsByApartmentIds(apartmentIds)
         .then(setUnits)
         .catch(() => setError('Failed to load units'))
@@ -113,18 +132,31 @@ export default function SelectUnitsModal({
           </button>
         </div>
 
+        <div className="flex shrink-0 border-b border-zinc-200 px-4 py-3">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by layout, building, price…"
+            className="w-full rounded-lg border border-zinc-600 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            aria-label="Search units"
+          />
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex justify-center py-12 text-zinc-500">Loading units…</div>
           ) : error ? (
             <div className="py-8 text-center text-sm text-red-600">{error}</div>
-          ) : units.length === 0 ? (
+          ) : filteredUnits.length === 0 ? (
             <div className="py-12 text-center text-sm text-zinc-500">
-              No units found for the selected apartments. Units may need to be added to the database.
+              {units.length === 0
+                ? 'No units found for the selected apartments. Units may need to be added to the database.'
+                : 'No matching units.'}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {units.map((unit) => {
+              {filteredUnits.map((unit) => {
                 const key = unitKey(unit.apartment_id, unit.id)
                 const isAlreadyAdded = existingCompareKeys.has(key)
                 const isAdding = addingId === unit.id

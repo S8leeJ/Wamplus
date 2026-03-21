@@ -20,8 +20,17 @@ export default function AddApartmentsModal({
 }: AddApartmentsModalProps) {
   const [apartments, setApartments] = useState<ApartmentForCompare[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const filteredApartments = apartments.filter((apt) => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return true
+    const name = apt.name.toLowerCase()
+    const address = (apt.address ?? '').toLowerCase()
+    return name.includes(q) || address.includes(q)
+  })
 
   useEffect(() => {
     if (isOpen) {
@@ -29,6 +38,7 @@ export default function AddApartmentsModal({
       setLoading(true)
       setError(null)
       setSelectedIds(new Set())
+      setSearchQuery('')
       getApartments()
         .then(setApartments)
         .catch(() => setError('Failed to load apartments'))
@@ -94,16 +104,29 @@ export default function AddApartmentsModal({
           </button>
         </div>
 
+        <div className="flex shrink-0 border-b border-zinc-200 px-4 py-3">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by building name or address…"
+            className="w-full rounded-lg border border-zinc-600 px-3 py-2 text-sm text-zinc-900 placeholder-zinc-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            aria-label="Search apartment buildings"
+          />
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex justify-center py-12 text-zinc-500">Loading apartments…</div>
           ) : error ? (
             <div className="py-8 text-center text-sm text-red-600">{error}</div>
-          ) : apartments.length === 0 ? (
-            <div className="py-12 text-center text-sm text-zinc-500">No apartments found.</div>
+          ) : filteredApartments.length === 0 ? (
+            <div className="py-12 text-center text-sm text-zinc-500">
+              {apartments.length === 0 ? 'No apartments found.' : 'No matching apartments.'}
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {apartments.map((apt) => {
+              {filteredApartments.map((apt) => {
                 const isAlreadyFavorite = existingFavoriteIds.has(apt.id)
                 const isSelected = selectedIds.has(apt.id)
                 return (
@@ -140,7 +163,6 @@ export default function AddApartmentsModal({
                     </div>
                     <div className="flex flex-col gap-1 p-3">
                       <p className="font-semibold text-zinc-900">{apt.name}</p>
-                      <p className="text-sm text-zinc-600">$$$ - $$$</p>
                       {apt.address && (
                         <p className="flex items-center gap-1 text-xs text-zinc-500">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
