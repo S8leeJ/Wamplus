@@ -1,16 +1,18 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import { useRef, useEffect, useState, useCallback } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import osmtogeojson from "osmtogeojson";
 import centroid from "@turf/centroid";
-
 import {
   TARGET_BUILDINGS,
   HEIGHT_OVERRIDES,
   MAP_BOUNDS,
 } from "@/lib/map-data";
+import ApartmentDetailModal from "@/app/apartments/ApartmentDetailModal";
+import { getCompareItems } from "@/lib/cached-actions";
+import type { CompareItemWithDetails } from "@/app/(dashboard)/compare/actions";
 
 type LngLatBounds =
   | { getSouth: () => number; getWest: () => number; getNorth: () => number; getEast: () => number }
@@ -20,7 +22,15 @@ export type MapApartment = {
   id: string;
   name: string;
   image_url?: string | null;
+  address?: string | null;
+  website?: string | null;
+  rating?: number | null;
+  reviews?: number | null;
 };
+
+function compareKey(apartmentId: string, unitId: string) {
+  return `${apartmentId}:${unitId}`;
+}
 
 function escapeHtml(s: string): string {
   return s
@@ -39,40 +49,46 @@ export default function MapComponent({
   initialFlyTo?: string;
 }) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+  const map = useRef<L.Map | null>(null);
+  const buildingsLayer = useRef<L.GeoJSON | null>(null);
+  const roadsLayer = useRef<L.GeoJSON | null>(null);
+  const activePopup = useRef<L.Popup | null>(null);
   const apartmentsRef = useRef<MapApartment[]>(apartments);
   const [loading, setLoading] = useState(false);
+  const [selectedApartment, setSelectedApartment] = useState<MapApartment | null>(null);
+  const [compareKeys, setCompareKeys] = useState<string[]>([]);
 
   apartmentsRef.current = apartments;
+
+  const fetchCompareKeys = useCallback(async () => {
+    const items: CompareItemWithDetails[] = await getCompareItems();
+    setCompareKeys(items.map((c) => compareKey(c.apartment_id, c.unit_id)));
+  }, []);
+
+  useEffect(() => {
+    fetchCompareKeys();
+  }, [fetchCompareKeys]);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {},
-        layers: [
-          {
-            id: "background",
-            type: "background",
-            paint: { "background-color": "#f0f0f0" },
-          },
-        ],
-      },
-      center: [-97.742, 30.288],
+    map.current = L.map(mapContainer.current, {
+      center: [30.288, -97.742],
       zoom: 16,
       minZoom: 14,
       maxZoom: 18,
-      pitch: 0,
-      bearing: 0,
+      zoomControl: false,
     });
 
-    map.current.addControl(
-      new maplibregl.NavigationControl({ visualizePitch: true }),
-      "top-right"
-    );
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map.current);
+
+    map.current.addControl(L.control.zoom({ position: "topright" }));
+
+    // Ensure popups render above map layers
+    const popupPane = map.current.getPane("popupPane");
+    if (popupPane) (popupPane as HTMLElement).style.zIndex = "2000";
 
     let bounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -104,12 +120,7 @@ export default function MapComponent({
       }
 
       if (needsCorrection) {
-        map.current!.easeTo({
-          center: [newLng, newLat],
-          zoom,
-          duration: 500,
-          easing: (t) => t * (2 - t),
-        });
+        map.current.flyTo([newLat, newLng], zoom, { duration: 0.5 });
       }
     };
 
@@ -259,60 +270,72 @@ export default function MapComponent({
           features: validRoads,
         };
 
-        if (map.current.getSource("buildings-source")) {
-          (
-            map.current.getSource("buildings-source") as maplibregl.GeoJSONSource
-          ).setData(buildingsGeoJSON);
+        const buildingStyle = (feature?: GeoJSON.Feature) => {
+          const isTarget = (feature?.properties?.isTarget as boolean) ?? false;
+          return {
+            fillColor: isTarget ? "#5C6596" : "#d9d9d9",
+            fillOpacity: 0.8,
+            color: isTarget ? "#4a5278" : "#bbb",
+            weight: 1,
+          };
+        };
+
+        const roadStyle = () => ({
+          color: "#888",
+          weight: 2,
+          opacity: 0.7,
+        });
+
+        if (buildingsLayer.current) {
+          buildingsLayer.current.clearLayers();
+          buildingsLayer.current.addData(buildingsGeoJSON);
         } else {
-          map.current.addSource("buildings-source", {
-            type: "geojson",
-            data: buildingsGeoJSON,
-          });
-          map.current.addLayer({
-            id: "3d-buildings",
-            type: "fill-extrusion",
-            source: "buildings-source",
-            paint: {
-              "fill-extrusion-color": [
-                "case",
-                ["boolean", ["get", "isTarget"], false],
-                "#5C6596",
-                "#d9d9d9",
-              ],
-              "fill-extrusion-height": ["get", "renderHeight"],
-              "fill-extrusion-base": 0,
-              "fill-extrusion-opacity": 1,
-              "fill-extrusion-vertical-gradient": true,
+          buildingsLayer.current = L.geoJSON(buildingsGeoJSON, {
+            style: buildingStyle,
+            onEachFeature: (feature: GeoJSON.Feature, layer: L.Layer) => {
+              layer.on({
+                click: (e: L.LeafletMouseEvent) => {
+                  if (!map.current) return;
+                  const props = (feature.properties || {}) as Record<string, unknown>;
+                  const centerPoint = centroid(feature as GeoJSON.Feature);
+                  const coords = centerPoint.geometry.coordinates as [number, number];
+
+                  const buildingName = String(props.name || "");
+                  const apartment = findApartmentForBuilding(buildingName);
+
+                  if (activePopup.current) {
+                    map.current.closePopup(activePopup.current);
+                  }
+
+                  activePopup.current = L.popup({
+                    autoClose: false,
+                    closeOnClick: false,
+                    closeButton: true,
+                  })
+                    .setLatLng(e.latlng)
+                    .setContent(createPopupContent(props, apartment))
+                    .openOn(map.current);
+
+                  map.current.flyTo([coords[1], coords[0]], 17, { duration: 0.5 });
+                },
+                mouseover: () => {
+                  if (map.current) map.current.getContainer().style.cursor = "pointer";
+                },
+                mouseout: () => {
+                  if (map.current) map.current.getContainer().style.cursor = "";
+                },
+              });
             },
-          });
+          }).addTo(map.current);
         }
 
-        if (map.current.getSource("roads-source")) {
-          (
-            map.current.getSource("roads-source") as maplibregl.GeoJSONSource
-          ).setData(roadsGeoJSON);
+        if (roadsLayer.current) {
+          roadsLayer.current.clearLayers();
+          roadsLayer.current.addData(roadsGeoJSON);
         } else {
-          map.current.addSource("roads-source", {
-            type: "geojson",
-            data: roadsGeoJSON,
-          });
-          map.current.addLayer({
-            id: "road-labels",
-            type: "symbol",
-            source: "roads-source",
-            layout: {
-              "text-field": ["get", "name"],
-              "text-font": ["Open Sans Semibold"],
-              "text-size": 12,
-              "symbol-placement": "line",
-              "text-offset": [0, 0.5],
-            },
-            paint: {
-              "text-color": "#555",
-              "text-halo-color": "#fff",
-              "text-halo-width": 2,
-            },
-          });
+          roadsLayer.current = L.geoJSON(roadsGeoJSON, {
+            style: roadStyle,
+          }).addTo(map.current);
         }
       } catch (error) {
         console.error("Error processing buildings:", error);
@@ -346,7 +369,7 @@ export default function MapComponent({
         content += `<p style="margin: 6px 0 0; font-size: 0.8rem; color: #888;">Height: ${escapeHtml(String(props.height))}m</p>`;
       }
       if (apartment) {
-        content += `<a href="/apartments" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #2563eb; text-decoration: none;">View apartment →</a>`;
+        content += `<button type="button" class="view-apartment-btn" data-apartment-id="${escapeHtml(apartment.id)}" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #2563eb; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit;">View apartment →</button>`;
       }
       content += `</div></div>`;
       return content;
@@ -363,52 +386,25 @@ export default function MapComponent({
       );
     };
 
-    const handleBuildingClick = (
-      props: Record<string, unknown>,
-      coords: [number, number]
-    ) => {
-      if (!map.current) return;
-      map.current.flyTo({
-        center: coords,
-        zoom: 17,
-        pitch: 45,
-        speed: 0.5,
-        curve: 1,
-        essential: true,
-      });
-    };
+    const loadAndFlyTo = async () => {
+      const allBuildings = await fetchBuildings(MAP_BOUNDS);
 
-    map.current.on("load", async () => {
-      await fetchBuildings(map.current!.getBounds());
-      // Load all buildings in map bounds so we can find the right one
-      const buildings = await fetchBuildings(MAP_BOUNDS);
-
-      // Fly to specific apartment: use same OSM building centroid as when clicking
-      if (initialFlyTo && buildings.length > 0) {
+      if (initialFlyTo && allBuildings.length > 0) {
         const aptLower = initialFlyTo.toLowerCase().trim();
-        const match = buildings.find((f) => {
+        const match = allBuildings.find((f) => {
           const bn = String((f.properties?.name as string) ?? "").toLowerCase();
           if (!bn) return false;
           return bn.includes(aptLower) || aptLower.includes(bn);
         });
-        const exact = buildings.find(
+        const exact = allBuildings.find(
           (f) => String((f.properties?.name as string) ?? "").toLowerCase() === aptLower
         );
         const feature = exact ?? match;
         if (feature) {
           const centerPoint = centroid(feature as GeoJSON.Feature);
           const coords = centerPoint.geometry.coordinates as [number, number];
-          map.current!.flyTo({
-            center: coords,
-            zoom: 18,
-            pitch: 60,
-            bearing: -17,
-            speed: 0.5,
-            curve: 1,
-            essential: true,
-          });
+          map.current!.flyTo([coords[1], coords[0]], 18, { duration: 0.5 });
         } else {
-          // Fallback to TARGET_BUILDINGS if no OSM building matches
           const search = aptLower.replace(/\s+/g, " ");
           const target = TARGET_BUILDINGS.find(
             (b) =>
@@ -417,51 +413,47 @@ export default function MapComponent({
               search.includes(b.name.toLowerCase())
           );
           if (target) {
-            map.current!.flyTo({
-              center: target.coords,
-              zoom: 18,
-              pitch: 60,
-              bearing: -17,
-              speed: 0.5,
-              curve: 1,
-              essential: true,
-            });
+            map.current!.flyTo(
+              [target.coords[1], target.coords[0]],
+              18,
+              { duration: 0.5 }
+            );
           }
         }
       }
-    });
+    };
 
-    map.current.on("click", "3d-buildings", (e) => {
-      if (!map.current || !e.features || e.features.length === 0) return;
-      const feature = e.features[0];
-      const props = feature.properties as Record<string, unknown>;
-      const centerPoint = centroid(feature as GeoJSON.Feature);
-      const coords = centerPoint.geometry.coordinates as [number, number];
-
-      handleBuildingClick(props, coords);
-
-      const buildingName = String(props.name || "");
-      const apartment = findApartmentForBuilding(buildingName);
-
-      new maplibregl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(createPopupContent(props, apartment))
-        .addTo(map.current!);
-    });
-
-    map.current.on("mouseenter", "3d-buildings", () => {
-      if (map.current) map.current.getCanvas().style.cursor = "pointer";
-    });
-    map.current.on("mouseleave", "3d-buildings", () => {
-      if (map.current) map.current.getCanvas().style.cursor = "";
-    });
+    loadAndFlyTo();
 
     return () => {
       if (bounceTimeout) clearTimeout(bounceTimeout);
+      if (activePopup.current) {
+        map.current?.closePopup(activePopup.current);
+        activePopup.current = null;
+      }
+      buildingsLayer.current?.remove();
+      roadsLayer.current?.remove();
       map.current?.remove();
       map.current = null;
+      buildingsLayer.current = null;
+      roadsLayer.current = null;
     };
   }, []);
+
+  const handleViewApartmentClick = (e: React.MouseEvent) => {
+    const btn = (e.target as HTMLElement).closest(".view-apartment-btn");
+    if (!btn) return;
+    const id = btn.getAttribute("data-apartment-id");
+    if (!id) return;
+    const apt = apartmentsRef.current.find((a) => a.id === id);
+    if (apt) {
+      setSelectedApartment(apt);
+      if (activePopup.current && map.current) {
+        map.current.closePopup(activePopup.current);
+        activePopup.current = null;
+      }
+    }
+  };
 
   const handleSearchSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const name = e.target.value;
@@ -469,23 +461,26 @@ export default function MapComponent({
 
     const target = TARGET_BUILDINGS.find((b) => b.name === name);
     if (target) {
-      map.current.flyTo({
-        center: target.coords,
-        zoom: 18,
-        pitch: 60,
-        bearing: -17,
-        speed: 0.5,
-        curve: 1,
-        essential: true,
-      });
+      map.current.flyTo(
+        [target.coords[1], target.coords[0]],
+        18,
+        { duration: 0.5 }
+      );
     }
   };
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" onClick={handleViewApartmentClick}>
+      <ApartmentDetailModal
+        isOpen={selectedApartment != null}
+        onClose={() => setSelectedApartment(null)}
+        apartment={selectedApartment}
+        compareKeys={compareKeys}
+        onAddedToCompare={fetchCompareKeys}
+      />
       <div
         className="absolute left-5 top-5 z-10 max-w-[300px] rounded-lg bg-white p-4 shadow-lg"
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 1000 }}
       >
         <h2 className="mb-2.5 text-lg font-semibold text-primary-900">UT Austin Map</h2>
         <div className="mb-2.5">
@@ -494,7 +489,7 @@ export default function MapComponent({
           </label>
           <select
             onChange={handleSearchSelect}
-              className="w-full rounded border text-primary-900 px-2 py-1.5"
+            className="w-full rounded border text-primary-900 px-2 py-1.5"
           >
             <option value="">Select a destination...</option>
             {TARGET_BUILDINGS.map((b, i) => (
@@ -509,9 +504,9 @@ export default function MapComponent({
       {loading && (
         <div
           className="absolute bottom-5 right-5 rounded-full bg-black/70 px-3 py-2 text-xs text-white"
-          style={{ zIndex: 1 }}
+          style={{ zIndex: 1000 }}
         >
-          Updating 3D Data...
+          Updating map data...
         </div>
       )}
       <div ref={mapContainer} className="h-full w-full" />

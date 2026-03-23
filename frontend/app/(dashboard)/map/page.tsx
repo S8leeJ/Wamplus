@@ -1,4 +1,4 @@
-import MapComponent from "@/components/MapComponent";
+import MapClient from "@/components/MapClient";
 import { getApartments } from "../compare/actions";
 
 export default async function MapPage({
@@ -15,7 +15,7 @@ export default async function MapPage({
 
   return (
     <div className="-m-6 h-[calc(100vh-3.5rem)] min-h-[400px]">
-      <MapComponent apartments={apartments} initialFlyTo={initialFlyTo} />
+      <MapClient apartments={apartments} initialFlyTo={initialFlyTo} />
     </div>
   );
 }

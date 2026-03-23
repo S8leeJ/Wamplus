@@ -148,7 +148,7 @@ export default function ApartmentDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 backdrop-blur-md"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-2 backdrop-blur-md"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
