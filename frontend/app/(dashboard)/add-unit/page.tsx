@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { submitUnitSubmission } from './actions'
 
 const inputBase =
   'w-full rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-zinc-900 placeholder-zinc-400 transition-colors focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20'
@@ -16,9 +17,47 @@ export default function AddUnitPage() {
   const [price, setPrice] = useState('')
   const [utilities, setUtilities] = useState('')
   const [parking, setParking] = useState('')
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [isPending, startTransition] = useTransition()
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // No backend connection yet - form does nothing on submit
+    setFeedback(null)
+    startTransition(async () => {
+      const result = await submitUnitSubmission({
+        apartmentName,
+        roomType,
+        bedrooms,
+        bathrooms,
+        sqFt,
+        floor,
+        windows,
+        price,
+        utilities,
+        parking,
+      })
+      if (result.ok) {
+        setApartmentName('')
+        setRoomType('')
+        setBedrooms('')
+        setBathrooms('')
+        setSqFt('')
+        setFloor('')
+        setWindows('')
+        setPrice('')
+        setUtilities('')
+        setParking('')
+        setFeedback({
+          type: 'success',
+          message: 'Unit saved. Thank you for contributing.',
+        })
+      } else {
+        setFeedback({ type: 'error', message: result.error })
+      }
+    })
   }
 
   return (
@@ -36,6 +75,18 @@ export default function AddUnitPage() {
         onSubmit={handleSubmit}
         className="mx-auto w-full max-w-xl"
       >
+        {feedback && (
+          <div
+            role="alert"
+            className={
+              feedback.type === 'success'
+                ? 'mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900'
+                : 'mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900'
+            }
+          >
+            {feedback.message}
+          </div>
+        )}
         <div className="rounded-2xl border border-primary-200 bg-white shadow-sm">
           <div className="border-b border-primary-100 px-6 py-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-600">
@@ -205,7 +256,7 @@ export default function AddUnitPage() {
                   step={1}
                   value={utilities}
                   onChange={(e) => setUtilities(e.target.value)}
-                  placeholder="e.g. 1500"
+                  placeholder="e.g. 100"
                   className={inputBase}
                 />
               </div>
@@ -223,7 +274,7 @@ export default function AddUnitPage() {
                   step={1}
                   value={parking}
                   onChange={(e) => setParking(e.target.value)}
-                  placeholder="e.g. 1500"
+                  placeholder="e.g. 100"
                   className={inputBase}
                 />
               </div>
@@ -233,9 +284,10 @@ export default function AddUnitPage() {
           <div className="px-6 py-5">
             <button
               type="submit"
-              className="w-full rounded-xl bg-primary-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+              disabled={isPending}
+              className="w-full rounded-xl bg-primary-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Submit
+              {isPending ? 'Saving…' : 'Submit'}
             </button>
           </div>
         </div>

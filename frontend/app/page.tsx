@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-orange-100 text-slate-900">
+    <div className="min-h-screen text-slate-900">
       {/* Navbar */}
-      <nav className="flex items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4 sm:px-8 sm:py-5 md:px-12 md:py-6">
+      <nav className="flex items-center justify-between border-b bg-stone-50 px-6 py-4 sm:px-8 sm:py-5 md:px-12 md:py-6">
         <span className="text-xl font-bold tracking-tight text-indigo-900 sm:text-2xl">
           WAMP+
         </span>
@@ -37,7 +37,7 @@ export default function LandingPage() {
         </Link>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-20 md:px-12 md:py-24 bg-stone-50">
+      <main className="mx-auto max-w-6xl px-6 py-20 md:px-12 md:py-24">
         {/* Section 1 */}
         <section className="mb-28 text-center md:mb-32">
           <p className="text-base font-semibold uppercase tracking-widest text-slate-500 sm:text-lg">
