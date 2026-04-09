@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import Image from "next/image";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import osmtogeojson from "osmtogeojson";
-import centroid from "@turf/centroid";
 import {
   TARGET_BUILDINGS,
   HEIGHT_OVERRIDES,
@@ -13,6 +13,14 @@ import {
 import ApartmentDetailModal from "@/app/apartments/ApartmentDetailModal";
 import { getCompareItems } from "@/lib/cached-actions";
 import type { CompareItemWithDetails } from "@/app/(dashboard)/compare/actions";
+
+/** OSRM foot times are optimistic for campus reality — inflate for display. */
+const WALK_DURATION_DISPLAY_MULTIPLIER = 1.5;
+
+export type SearchableBuilding = {
+  name: string;
+  isApartment: boolean;
+};
 
 type LngLatBounds =
   | { getSouth: () => number; getWest: () => number; getNorth: () => number; getEast: () => number }
@@ -30,6 +38,19 @@ export type MapApartment = {
 
 function compareKey(apartmentId: string, unitId: string) {
   return `${apartmentId}:${unitId}`;
+}
+
+function findApartmentForBuilding(
+  buildingName: string,
+  apartments: MapApartment[]
+): MapApartment | null {
+  if (!apartments.length) return null;
+  const lower = buildingName?.toLowerCase() ?? "";
+  return (
+    apartments.find((a) => lower.includes(a.name.toLowerCase())) ??
+    apartments.find((a) => a.name.toLowerCase().includes(lower)) ??
+    null
+  );
 }
 
 function escapeHtml(s: string): string {
@@ -52,11 +73,41 @@ export default function MapComponent({
   const map = useRef<L.Map | null>(null);
   const buildingsLayer = useRef<L.GeoJSON | null>(null);
   const roadsLayer = useRef<L.GeoJSON | null>(null);
-  const activePopup = useRef<L.Popup | null>(null);
+  const allBuildingsFeaturesRef = useRef<GeoJSON.Feature[]>([]);
+  const fitMapToBuildingFeatureRef = useRef<(feature: GeoJSON.Feature) => void>(
+    () => {}
+  );
+  const activeBuildingPopupRef = useRef<L.Popup | null>(null);
   const apartmentsRef = useRef<MapApartment[]>(apartments);
   const [loading, setLoading] = useState(false);
   const [selectedApartment, setSelectedApartment] = useState<MapApartment | null>(null);
   const [compareKeys, setCompareKeys] = useState<string[]>([]);
+  const [buildingPanel, setBuildingPanel] = useState<{
+    props: Record<string, unknown>;
+    apartment: MapApartment | null;
+    kind: "apartment" | "campus";
+  } | null>(null);
+  const [searchableBuildings, setSearchableBuildings] = useState<SearchableBuilding[]>([]);
+  const [mapSearch, setMapSearch] = useState("");
+  /** Hide typeahead after picking a building until user edits or refocuses search. */
+  const [mapSearchDropdownDismissed, setMapSearchDropdownDismissed] = useState(false);
+  const [routeFromDropdownDismissed, setRouteFromDropdownDismissed] = useState(false);
+  const [routeToDropdownDismissed, setRouteToDropdownDismissed] = useState(false);
+  const [showWalkingDirections, setShowWalkingDirections] = useState(true);
+  const [routeFromSearch, setRouteFromSearch] = useState("");
+  const [routeToSearch, setRouteToSearch] = useState("");
+  const [routeFromName, setRouteFromName] = useState<string | null>(null);
+  const [routeToName, setRouteToName] = useState<string | null>(null);
+  const [useMyLocationStart, setUseMyLocationStart] = useState(false);
+  const [routeSummary, setRouteSummary] = useState<{
+    distanceM: number;
+    durationS: number;
+    fromLabel: string;
+    toLabel: string;
+  } | null>(null);
+  const [routeFetching, setRouteFetching] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
+  const routeOverlayRef = useRef<L.Layer | null>(null);
 
   apartmentsRef.current = apartments;
 
@@ -69,6 +120,222 @@ export default function MapComponent({
     fetchCompareKeys();
   }, [fetchCompareKeys]);
 
+  const searchResults = useMemo(() => {
+    const q = mapSearch.trim().toLowerCase();
+    if (!q) return [];
+    return searchableBuildings
+      .filter((b) => b.name.toLowerCase().includes(q))
+      .slice(0, 16);
+  }, [mapSearch, searchableBuildings]);
+
+  const routeFromResults = useMemo(() => {
+    const q = routeFromSearch.trim().toLowerCase();
+    if (!q) return [];
+    return searchableBuildings
+      .filter((b) => b.name.toLowerCase().includes(q))
+      .slice(0, 12);
+  }, [routeFromSearch, searchableBuildings]);
+
+  const routeToResults = useMemo(() => {
+    const q = routeToSearch.trim().toLowerCase();
+    if (!q) return [];
+    return searchableBuildings
+      .filter((b) => b.name.toLowerCase().includes(q))
+      .slice(0, 12);
+  }, [routeToSearch, searchableBuildings]);
+
+  const getLngLatForBuilding = useCallback((name: string): { lng: number; lat: number } | null => {
+    const key = name.trim().toLowerCase();
+    const feature = allBuildingsFeaturesRef.current.find(
+      (f) => String(f.properties?.name ?? "").trim().toLowerCase() === key
+    );
+    if (feature) {
+      const gj = L.geoJSON(feature as GeoJSON.Feature);
+      const c = gj.getBounds().getCenter();
+      return { lng: c.lng, lat: c.lat };
+    }
+    const t = TARGET_BUILDINGS.find((b) => b.name === name);
+    if (t) return { lng: t.coords[0], lat: t.coords[1] };
+    return null;
+  }, []);
+
+  const clearWalkingRoute = useCallback(() => {
+    if (routeOverlayRef.current && map.current) {
+      map.current.removeLayer(routeOverlayRef.current);
+      routeOverlayRef.current = null;
+    }
+    setRouteSummary(null);
+    setRouteError(null);
+  }, []);
+
+  const resolveRouteEndpoint = useCallback(
+    (picked: string | null, searchText: string): string | null => {
+      if (picked) return picked;
+      const q = searchText.trim();
+      if (!q) return null;
+      const hit = searchableBuildings.find(
+        (b) => b.name.toLowerCase() === q.toLowerCase()
+      );
+      return hit ? hit.name : null;
+    },
+    [searchableBuildings]
+  );
+
+  const requestWalkingRoute = useCallback(async () => {
+    if (!map.current) return;
+    setRouteError(null);
+    clearWalkingRoute();
+    setRouteFetching(true);
+    try {
+      let from: { lng: number; lat: number };
+      let fromLabel: string;
+      if (useMyLocationStart) {
+        from = await new Promise<{ lng: number; lat: number }>((resolve, reject) => {
+          if (typeof navigator === "undefined" || !navigator.geolocation) {
+            reject(new Error("Location is not available in this browser."));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (pos) =>
+              resolve({
+                lng: pos.coords.longitude,
+                lat: pos.coords.latitude,
+              }),
+            () =>
+              reject(
+                new Error(
+                  "Could not get your location. Allow access in the browser or choose a start building."
+                )
+              ),
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+          );
+        });
+        fromLabel = "My location";
+      } else {
+        const startName = resolveRouteEndpoint(routeFromName, routeFromSearch);
+        if (!startName) {
+          setRouteError("Select a starting building.");
+          return;
+        }
+        const c = getLngLatForBuilding(startName);
+        if (!c) {
+          setRouteError("Invalid starting building.");
+          return;
+        }
+        from = c;
+        fromLabel = startName;
+      }
+      const destName = resolveRouteEndpoint(routeToName, routeToSearch);
+      if (!destName) {
+        setRouteError("Select a destination building.");
+        return;
+      }
+      const to = getLngLatForBuilding(destName);
+      if (!to) {
+        setRouteError("Invalid destination.");
+        return;
+      }
+      const toLabel = destName;
+
+      const url = `https://router.project-osrm.org/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Routing service unavailable. Try again later.");
+      const data = (await res.json()) as {
+        code?: string;
+        message?: string;
+        routes?: Array<{
+          distance: number;
+          duration: number;
+          geometry: GeoJSON.LineString | GeoJSON.MultiLineString;
+        }>;
+      };
+      if (data.code !== "Ok" || !data.routes?.[0]?.geometry) {
+        throw new Error(
+          data.message || "No walking route found. Try buildings closer together on streets."
+        );
+      }
+      const r = data.routes[0];
+      const layer = L.geoJSON(r.geometry as GeoJSON.GeoJsonObject, {
+        style: {
+          color: "#5C6596",
+          weight: 5,
+          opacity: 0.9,
+          lineCap: "round",
+          lineJoin: "round",
+        },
+      });
+      layer.addTo(map.current);
+      routeOverlayRef.current = layer;
+      const b = layer.getBounds();
+      if (b.isValid()) {
+        map.current.fitBounds(b, { padding: [80, 80], maxZoom: 17, animate: true });
+      }
+      setRouteSummary({
+        distanceM: r.distance,
+        durationS: r.duration * WALK_DURATION_DISPLAY_MULTIPLIER,
+        fromLabel,
+        toLabel,
+      });
+    } catch (e) {
+      setRouteError(e instanceof Error ? e.message : "Could not load route.");
+    } finally {
+      setRouteFetching(false);
+    }
+  }, [
+    clearWalkingRoute,
+    getLngLatForBuilding,
+    resolveRouteEndpoint,
+    routeFromName,
+    routeFromSearch,
+    routeToName,
+    routeToSearch,
+    useMyLocationStart,
+  ]);
+
+  const flyToTargetByName = useCallback((name: string) => {
+    if (!map.current) return;
+    setMapSearchDropdownDismissed(true);
+    setMapSearch(name);
+    const key = name.trim().toLowerCase();
+    const feature =
+      allBuildingsFeaturesRef.current.find(
+        (f) => String(f.properties?.name ?? "").trim().toLowerCase() === key
+      ) ?? null;
+
+    const list = apartmentsRef.current;
+    const matchedTarget = TARGET_BUILDINGS.find((b) => b.name === name);
+    const isApartment =
+      (feature?.properties?.isApartment as boolean | undefined) ??
+      (matchedTarget != null);
+
+    const apartment =
+      isApartment
+        ? feature
+          ? findApartmentForBuilding(String(feature.properties?.name ?? ""), list) ??
+            (matchedTarget ? findApartmentForBuilding(matchedTarget.name, list) : null)
+          : matchedTarget
+            ? findApartmentForBuilding(matchedTarget.name, list)
+            : null
+        : null;
+
+    const kind: "apartment" | "campus" = isApartment ? "apartment" : "campus";
+
+    if (feature) {
+      const props = (feature.properties || {}) as Record<string, unknown>;
+      setBuildingPanel({ props, apartment, kind });
+      fitMapToBuildingFeatureRef.current(feature);
+    } else if (matchedTarget) {
+      setBuildingPanel({
+        props: { name: matchedTarget.name },
+        apartment: findApartmentForBuilding(matchedTarget.name, list),
+        kind: "apartment",
+      });
+      map.current.flyTo([matchedTarget.coords[1], matchedTarget.coords[0]], 18, {
+        duration: 0.5,
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -80,11 +347,15 @@ export default function MapComponent({
       zoomControl: false,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // Carto Voyager: clearer typography & palette than raw OSM tiles (same OSM data underneath).
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 20,
     }).addTo(map.current);
 
-    map.current.addControl(L.control.zoom({ position: "topright" }));
+    map.current.addControl(L.control.zoom({ position: "bottomright" }));
 
     // Ensure popups render above map layers
     const popupPane = map.current.getPane("popupPane");
@@ -225,14 +496,14 @@ export default function MapComponent({
             name?: string;
             height?: string | number;
             "building:levels"?: string | number;
-            isTarget?: boolean;
+            isApartment?: boolean;
             renderHeight?: number;
           };
           const name = (props.name?.toString() || "").toLowerCase();
-          const matchedTarget = TARGET_BUILDINGS.find((t) =>
+          const matchedApt = TARGET_BUILDINGS.find((t) =>
             name.includes(t.name.toLowerCase())
           );
-          props.isTarget = !!matchedTarget;
+          props.isApartment = !!matchedApt;
 
           let h = 0;
           const overrideKey = Object.keys(HEIGHT_OVERRIDES).find((key) =>
@@ -253,6 +524,26 @@ export default function MapComponent({
           props.renderHeight = h;
         });
 
+        const searchableMap = new Map<string, SearchableBuilding>();
+        for (const f of validBuildings) {
+          const raw = String(f.properties?.name ?? "").trim();
+          if (!raw) continue;
+          const k = raw.toLowerCase();
+          if (searchableMap.has(k)) continue;
+          const nl = raw.toLowerCase();
+          const isApartment = TARGET_BUILDINGS.some((t) =>
+            nl.includes(t.name.toLowerCase())
+          );
+          searchableMap.set(k, { name: raw, isApartment });
+        }
+        setSearchableBuildings(
+          Array.from(searchableMap.values()).sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+        );
+
+        allBuildingsFeaturesRef.current = validBuildings;
+
         const buildingsGeoJSON: GeoJSON.FeatureCollection = {
           type: "FeatureCollection",
           features: validBuildings,
@@ -271,20 +562,45 @@ export default function MapComponent({
         };
 
         const buildingStyle = (feature?: GeoJSON.Feature) => {
-          const isTarget = (feature?.properties?.isTarget as boolean) ?? false;
+          const isApartment = (feature?.properties?.isApartment as boolean) ?? false;
+          if (isApartment) {
+            return {
+              fillColor: "#5C6596",
+              fillOpacity: 0.38,
+              stroke: false,
+            };
+          }
           return {
-            fillColor: isTarget ? "#5C6596" : "#d9d9d9",
-            fillOpacity: 0.8,
-            color: isTarget ? "#4a5278" : "#bbb",
-            weight: 1,
+            fillColor: "#94a3b8",
+            fillOpacity: 0.1,
+            color: "#cbd5e1",
+            weight: 0.6,
           };
         };
 
         const roadStyle = () => ({
-          color: "#888",
-          weight: 2,
-          opacity: 0.7,
+          color: "#94a3b8",
+          weight: 1.5,
+          opacity: 0.45,
         });
+
+        const fitMapToBuildingFeature = (feature: GeoJSON.Feature) => {
+          if (!map.current) return;
+          const gjLayer = L.geoJSON(feature);
+          const b = gjLayer.getBounds();
+          if (!b.isValid()) return;
+          const w = typeof window !== "undefined" ? window.innerWidth : 1280;
+          const leftPad = Math.min(420, Math.max(260, Math.round(w * 0.25)));
+          const topPad = 80;
+          map.current.fitBounds(b, {
+            paddingTopLeft: L.point(leftPad + 8, topPad),
+            paddingBottomRight: L.point(32, 32),
+            maxZoom: 18,
+            animate: true,
+            duration: 0.55,
+          });
+        };
+        fitMapToBuildingFeatureRef.current = fitMapToBuildingFeature;
 
         if (buildingsLayer.current) {
           buildingsLayer.current.clearLayers();
@@ -297,26 +613,45 @@ export default function MapComponent({
                 click: (e: L.LeafletMouseEvent) => {
                   if (!map.current) return;
                   const props = (feature.properties || {}) as Record<string, unknown>;
-                  const centerPoint = centroid(feature as GeoJSON.Feature);
-                  const coords = centerPoint.geometry.coordinates as [number, number];
+                  const buildingName = String(props.name || "").trim();
+                  if (!buildingName) return;
 
-                  const buildingName = String(props.name || "");
-                  const apartment = findApartmentForBuilding(buildingName);
+                  const isApartment = (props.isApartment as boolean) ?? false;
+                  const kind: "apartment" | "campus" = isApartment
+                    ? "apartment"
+                    : "campus";
+                  const apartment = isApartment
+                    ? findApartmentForBuilding(
+                        buildingName,
+                        apartmentsRef.current
+                      )
+                    : null;
 
-                  if (activePopup.current) {
-                    map.current.closePopup(activePopup.current);
+                  setBuildingPanel({ props, apartment, kind });
+                  fitMapToBuildingFeature(feature as GeoJSON.Feature);
+
+                  if (activeBuildingPopupRef.current && map.current) {
+                    map.current.closePopup(activeBuildingPopupRef.current);
+                    activeBuildingPopupRef.current = null;
                   }
-
-                  activePopup.current = L.popup({
+                  const pathLayer = e.target as L.Polygon;
+                  const center = pathLayer.getBounds().getCenter();
+                  const label =
+                    buildingName.trim() || "Building";
+                  const popup = L.popup({
+                    className: "building-name-popup",
+                    closeButton: true,
                     autoClose: false,
                     closeOnClick: false,
-                    closeButton: true,
                   })
-                    .setLatLng(e.latlng)
-                    .setContent(createPopupContent(props, apartment))
-                    .openOn(map.current);
+                    .setLatLng(center)
+                    .setContent(
+                      `<div style="font-weight:600;font-size:0.875rem;color:#111827;line-height:1.35;max-width:260px;">${escapeHtml(label)}</div>`
+                    );
+                  popup.openOn(map.current);
+                  activeBuildingPopupRef.current = popup;
 
-                  map.current.flyTo([coords[1], coords[0]], 17, { duration: 0.5 });
+                  e.originalEvent.stopPropagation();
                 },
                 mouseover: () => {
                   if (map.current) map.current.getContainer().style.cursor = "pointer";
@@ -346,46 +681,6 @@ export default function MapComponent({
       return validBuildings;
     };
 
-    const createPopupContent = (
-      props: Record<string, unknown>,
-      apartment: MapApartment | null
-    ) => {
-      const name = escapeHtml(String(props.name || "Building"));
-      const addrStreet = props["addr:street"]
-        ? escapeHtml(
-            `${(props["addr:housenumber"] || "")} ${props["addr:street"]}`
-          )
-        : "";
-      let content = `<div style="padding: 0; color: #333; font-family: system-ui, sans-serif; max-width: 280px;">`;
-      if (apartment?.image_url) {
-        content += `<img src="${escapeHtml(apartment.image_url)}" alt="${escapeHtml(apartment.name)}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 8px 8px 0 0; display: block;" />`;
-      }
-      content += `<div style="padding: 10px 12px;">`;
-      content += `<h3 style="margin: 0 0 6px; font-size: 1rem; font-weight: 600;">${name}</h3>`;
-      if (addrStreet) {
-        content += `<p style="margin: 0; font-size: 0.85rem; color: #666;">${addrStreet}</p>`;
-      }
-      if (props.height) {
-        content += `<p style="margin: 6px 0 0; font-size: 0.8rem; color: #888;">Height: ${escapeHtml(String(props.height))}m</p>`;
-      }
-      if (apartment) {
-        content += `<button type="button" class="view-apartment-btn" data-apartment-id="${escapeHtml(apartment.id)}" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #2563eb; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit;">View apartment →</button>`;
-      }
-      content += `</div></div>`;
-      return content;
-    };
-
-    const findApartmentForBuilding = (buildingName: string): MapApartment | null => {
-      const list = apartmentsRef.current;
-      if (!list.length) return null;
-      const lower = buildingName?.toLowerCase() ?? "";
-      return (
-        list.find((a) => lower.includes(a.name.toLowerCase())) ??
-        list.find((a) => a.name.toLowerCase().includes(lower)) ??
-        null
-      );
-    };
-
     const loadAndFlyTo = async () => {
       const allBuildings = await fetchBuildings(MAP_BOUNDS);
 
@@ -401,9 +696,9 @@ export default function MapComponent({
         );
         const feature = exact ?? match;
         if (feature) {
-          const centerPoint = centroid(feature as GeoJSON.Feature);
-          const coords = centerPoint.geometry.coordinates as [number, number];
-          map.current!.flyTo([coords[1], coords[0]], 18, { duration: 0.5 });
+          const label = String((feature.properties?.name as string) ?? initialFlyTo);
+          setMapSearch(label);
+          fitMapToBuildingFeatureRef.current(feature as GeoJSON.Feature);
         } else {
           const search = aptLower.replace(/\s+/g, " ");
           const target = TARGET_BUILDINGS.find(
@@ -413,6 +708,7 @@ export default function MapComponent({
               search.includes(b.name.toLowerCase())
           );
           if (target) {
+            setMapSearch(target.name);
             map.current!.flyTo(
               [target.coords[1], target.coords[0]],
               18,
@@ -427,9 +723,13 @@ export default function MapComponent({
 
     return () => {
       if (bounceTimeout) clearTimeout(bounceTimeout);
-      if (activePopup.current) {
-        map.current?.closePopup(activePopup.current);
-        activePopup.current = null;
+      if (activeBuildingPopupRef.current && map.current) {
+        map.current.closePopup(activeBuildingPopupRef.current);
+        activeBuildingPopupRef.current = null;
+      }
+      if (routeOverlayRef.current && map.current) {
+        map.current.removeLayer(routeOverlayRef.current);
+        routeOverlayRef.current = null;
       }
       buildingsLayer.current?.remove();
       roadsLayer.current?.remove();
@@ -440,37 +740,13 @@ export default function MapComponent({
     };
   }, []);
 
-  const handleViewApartmentClick = (e: React.MouseEvent) => {
-    const btn = (e.target as HTMLElement).closest(".view-apartment-btn");
-    if (!btn) return;
-    const id = btn.getAttribute("data-apartment-id");
-    if (!id) return;
-    const apt = apartmentsRef.current.find((a) => a.id === id);
-    if (apt) {
-      setSelectedApartment(apt);
-      if (activePopup.current && map.current) {
-        map.current.closePopup(activePopup.current);
-        activePopup.current = null;
-      }
-    }
-  };
-
-  const handleSearchSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const name = e.target.value;
-    if (!name || !map.current) return;
-
-    const target = TARGET_BUILDINGS.find((b) => b.name === name);
-    if (target) {
-      map.current.flyTo(
-        [target.coords[1], target.coords[0]],
-        18,
-        { duration: 0.5 }
-      );
-    }
+  const addrLine = (props: Record<string, unknown>) => {
+    if (!props["addr:street"]) return null;
+    return `${props["addr:housenumber"] ?? ""} ${props["addr:street"]}`.trim();
   };
 
   return (
-    <div className="relative h-full w-full" onClick={handleViewApartmentClick}>
+    <div className="relative h-full w-full">
       <ApartmentDetailModal
         isOpen={selectedApartment != null}
         onClose={() => setSelectedApartment(null)}
@@ -478,34 +754,337 @@ export default function MapComponent({
         compareKeys={compareKeys}
         onAddedToCompare={fetchCompareKeys}
       />
-      <div
-        className="absolute left-5 top-5 z-10 max-w-[300px] rounded-lg bg-white p-4 shadow-lg"
-        style={{ zIndex: 1000 }}
-      >
-        <h2 className="mb-2.5 text-lg font-semibold text-primary-900">UT Austin Map</h2>
-        <div className="mb-2.5">
-          <label className="mb-1 block text-xs text-primary-900">
-            Fly to Building:
-          </label>
-          <select
-            onChange={handleSearchSelect}
-            className="w-full rounded border text-primary-900 px-2 py-1.5"
-          >
-            <option value="">Select a destination...</option>
-            {TARGET_BUILDINGS.map((b, i) => (
-              <option key={i} value={b.name}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+
+      {/* Top-right: fly-to search + walking directions */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1100] flex justify-end px-3 pt-3">
+        <div className="pointer-events-auto flex w-full max-w-2xl flex-col items-end gap-2">
+          <div className="relative w-full">
+            <label htmlFor="map-building-search" className="sr-only">
+              Search buildings
+            </label>
+            <input
+              id="map-building-search"
+              type="search"
+              value={mapSearch}
+              onChange={(e) => {
+                setMapSearchDropdownDismissed(false);
+                setMapSearch(e.target.value);
+              }}
+              onFocus={() => setMapSearchDropdownDismissed(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchResults.length > 0) {
+                  e.preventDefault();
+                  flyToTargetByName(searchResults[0].name);
+                }
+              }}
+              placeholder="Search campus buildings (OSM)…"
+              className="w-full rounded-xl border border-zinc-200 bg-white/95 py-2.5 pl-4 pr-10 text-sm text-zinc-900 shadow-md backdrop-blur placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25"
+              autoComplete="off"
+            />
+            <svg
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            {mapSearch.trim() &&
+              searchResults.length > 0 &&
+              !mapSearchDropdownDismissed && (
+              <ul
+                className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-auto rounded-xl border border-zinc-200 bg-white py-1 shadow-lg"
+                role="listbox"
+              >
+                {searchResults.map((b) => (
+                  <li key={b.name}>
+                    <button
+                      type="button"
+                      role="option"
+                      className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm text-zinc-800 hover:bg-primary-50"
+                      onClick={() => flyToTargetByName(b.name)}
+                    >
+                      <span className="min-w-0 truncate">{b.name}</span>
+                      <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                        {b.isApartment ? "Apt" : "Campus"}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {mapSearch.trim() &&
+              searchResults.length === 0 &&
+              !mapSearchDropdownDismissed && (
+              <p className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-500 shadow-lg">
+                No matching building.
+              </p>
+            )}
+          </div>
+
+          <div className="w-full overflow-visible rounded-xl border border-zinc-200 bg-white/95 shadow-md backdrop-blur">
+            <button
+              type="button"
+              onClick={() => setShowWalkingDirections((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-zinc-50/80 sm:px-5"
+              aria-expanded={showWalkingDirections}
+            >
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-100 text-primary-800"
+                  aria-hidden
+                >
+                  <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75L15.75 12 9 17.25" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H3.75" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold uppercase tracking-wide text-primary-800">
+                    Walking directions
+                  </span>
+                  {!showWalkingDirections && (
+                    <span className="mt-0.5 block text-[11px] font-normal normal-case text-zinc-500">
+                      Plan a walking route on campus
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-zinc-600">
+                {showWalkingDirections ? "Hide" : "Show"}
+                <svg
+                  className={`h-5 w-5 text-zinc-500 transition-transform ${showWalkingDirections ? "rotate-180" : ""}`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </span>
+            </button>
+
+          {showWalkingDirections && (
+          <div className="border-t border-zinc-100 px-4 pb-4 pt-3 sm:px-5">
+            <p className="text-[11px] leading-snug text-zinc-500">
+              Routes use OpenStreetMap walking paths (OSRM). Allow location if you start from “my location.” Times are a relaxed campus estimate (slower than raw OSRM).
+            </p>
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
+              <input
+                type="checkbox"
+                checked={useMyLocationStart}
+                onChange={(e) => {
+                  setUseMyLocationStart(e.target.checked);
+                  if (e.target.checked) {
+                    setRouteFromName(null);
+                    setRouteFromSearch("");
+                  }
+                }}
+                className="rounded border-zinc-300 text-primary-700 focus:ring-primary-500"
+              />
+              Start from my current location
+            </label>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="relative">
+                <label htmlFor="route-from" className="mb-1 block text-xs font-medium text-zinc-600">
+                  From
+                </label>
+                <input
+                  id="route-from"
+                  type="search"
+                  disabled={useMyLocationStart}
+                  value={routeFromSearch}
+                  onChange={(e) => {
+                    setRouteFromDropdownDismissed(false);
+                    setRouteFromSearch(e.target.value);
+                    setRouteFromName(null);
+                  }}
+                  onFocus={() => setRouteFromDropdownDismissed(false)}
+                  placeholder={useMyLocationStart ? "Using GPS…" : "Search start building…"}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-zinc-100 disabled:text-zinc-500"
+                  autoComplete="off"
+                />
+                {!useMyLocationStart &&
+                  routeFromSearch.trim() &&
+                  routeFromResults.length > 0 &&
+                  !routeFromDropdownDismissed && (
+                  <ul className="absolute left-0 right-0 top-full z-[1200] mt-0.5 max-h-[min(22rem,50vh)] overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+                    {routeFromResults.map((b) => (
+                      <li key={`from-${b.name}`}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-zinc-800 hover:bg-primary-50"
+                          onClick={() => {
+                            setRouteFromDropdownDismissed(true);
+                            setRouteFromName(b.name);
+                            setRouteFromSearch(b.name);
+                          }}
+                        >
+                          <span className="min-w-0 truncate">{b.name}</span>
+                          <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-500">
+                            {b.isApartment ? "Apt" : "Campus"}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="relative">
+                <label htmlFor="route-to" className="mb-1 block text-xs font-medium text-zinc-600">
+                  To
+                </label>
+                <input
+                  id="route-to"
+                  type="search"
+                  value={routeToSearch}
+                  onChange={(e) => {
+                    setRouteToDropdownDismissed(false);
+                    setRouteToSearch(e.target.value);
+                    setRouteToName(null);
+                  }}
+                  onFocus={() => setRouteToDropdownDismissed(false)}
+                  placeholder="Search destination building…"
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  autoComplete="off"
+                />
+                {routeToSearch.trim() &&
+                  routeToResults.length > 0 &&
+                  !routeToDropdownDismissed && (
+                  <ul className="absolute left-0 right-0 top-full z-[1200] mt-0.5 max-h-[min(22rem,50vh)] overflow-auto rounded-lg border border-zinc-200 bg-white py-1 shadow-lg">
+                    {routeToResults.map((b) => (
+                      <li key={`to-${b.name}`}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-zinc-800 hover:bg-primary-50"
+                          onClick={() => {
+                            setRouteToDropdownDismissed(true);
+                            setRouteToName(b.name);
+                            setRouteToSearch(b.name);
+                          }}
+                        >
+                          <span className="min-w-0 truncate">{b.name}</span>
+                          <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-zinc-500">
+                            {b.isApartment ? "Apt" : "Campus"}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={requestWalkingRoute}
+                disabled={routeFetching}
+                className="rounded-lg bg-primary-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {routeFetching ? "Calculating…" : "Show walking route"}
+              </button>
+              {routeSummary && (
+                <button
+                  type="button"
+                  onClick={clearWalkingRoute}
+                  className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                >
+                  Clear route
+                </button>
+              )}
+            </div>
+
+            {routeSummary && (
+              <div className="mt-3 rounded-lg border border-primary-200 bg-primary-50/80 px-3 py-2 text-sm text-primary-950">
+                <p className="font-medium">
+                  {(routeSummary.distanceM / 1609.34).toFixed(2)} mi ·{" "}
+                  {Math.max(1, Math.round(routeSummary.durationS / 60))} min walk
+                </p>
+                <p className="mt-0.5 text-xs text-primary-900/90">
+                  {routeSummary.fromLabel} → {routeSummary.toLabel}
+                </p>
+              </div>
+            )}
+            {routeError && (
+              <p className="mt-2 text-xs font-medium text-red-700">{routeError}</p>
+            )}
+          </div>
+          )}
+          </div>
         </div>
       </div>
 
+      {/* Left panel — target building info (~25% width) */}
+      {buildingPanel && (
+        <aside className="absolute bottom-0 left-0 top-0 z-[1050] flex w-[min(25vw,420px)] min-w-[260px] max-w-[90vw] flex-col border-r border-zinc-200 bg-white shadow-xl">
+          <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3">
+            <h2 className="pr-2 text-sm font-semibold uppercase tracking-wide text-primary-700">
+              {buildingPanel.kind === "campus" ? "Campus building" : "Apartment"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setBuildingPanel(null)}
+              className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800"
+              aria-label="Close panel"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            {buildingPanel.apartment?.image_url && (
+              <div className="relative mb-4 aspect-[16/10] w-full overflow-hidden rounded-xl bg-zinc-100">
+                <Image
+                  src={buildingPanel.apartment.image_url}
+                  alt={buildingPanel.apartment.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 420px) 90vw, 25vw"
+                  unoptimized
+                />
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-zinc-900">
+              {String(buildingPanel.props.name ?? "Building")}
+            </h3>
+            {buildingPanel.kind === "campus" && (
+              <p className="mt-1 text-xs text-zinc-500">
+                Campus building (OpenStreetMap)—not a housing listing.
+              </p>
+            )}
+            {addrLine(buildingPanel.props) && (
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                {addrLine(buildingPanel.props)}
+              </p>
+            )}
+            {buildingPanel.props.height != null && String(buildingPanel.props.height) !== "" && (
+              <p className="mt-3 text-xs text-zinc-500">
+                Height: {String(buildingPanel.props.height)}m
+              </p>
+            )}
+            {buildingPanel.apartment && (
+              <button
+                type="button"
+                onClick={() => setSelectedApartment(buildingPanel.apartment)}
+                className="mt-5 w-full rounded-xl bg-primary-700 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+              >
+                View apartment details
+              </button>
+            )}
+          </div>
+        </aside>
+      )}
+
       {loading && (
-        <div
-          className="absolute bottom-5 right-5 rounded-full bg-black/70 px-3 py-2 text-xs text-white"
-          style={{ zIndex: 1000 }}
-        >
+        <div className="absolute bottom-5 right-5 z-[1000] rounded-full bg-black/70 px-3 py-2 text-xs text-white">
           Updating map data...
         </div>
       )}

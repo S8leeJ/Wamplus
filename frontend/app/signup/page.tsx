@@ -14,6 +14,9 @@ export default async function SignupPage(props: {
         <h1 className="text-3xl font-bold tracking-tight text-indigo-900 sm:text-4xl">
           Sign Up
         </h1>
+        <p className="rounded-xl bg-indigo-50 px-5 py-3 text-sm font-medium text-indigo-900">
+          Sign up with your utexas email.
+        </p>
         {searchParams?.message && (
           <p className="rounded-xl bg-stone-100 px-5 py-4 text-base font-medium text-slate-700">
             {searchParams.message}

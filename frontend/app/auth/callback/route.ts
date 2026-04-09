@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 
+function isUtexasEmail(email?: string | null) {
+  return !!email && email.toLowerCase().includes('utexas')
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
@@ -14,6 +18,12 @@ export async function GET(request: Request) {
     if (!exchangeError) {
       const sessionUser = exchangeData?.session?.user
       if (sessionUser) {
+        if (!isUtexasEmail(sessionUser.email)) {
+          await supabase.auth.signOut()
+          return NextResponse.redirect(
+            `${origin}/login?error=Use a Google account containing utexas`
+          )
+        }
         await supabase.from('users').upsert({
           id: sessionUser.id,
           email: sessionUser.email,

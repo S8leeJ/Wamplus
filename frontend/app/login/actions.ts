@@ -6,6 +6,11 @@ import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
 
+function isUtexasEmail(email: string) {
+    const normalized = email.trim().toLowerCase()
+    return normalized.includes('utexas')
+}
+
 export async function signOut() {
     const supabase = await createClient()
     await supabase.auth.signOut()
@@ -39,6 +44,10 @@ export async function signup(formData: FormData) {
     const password = formData.get('password') as string
     const first_name = formData.get('first_name') as string
     const last_name = formData.get('last_name') as string
+
+    if (!isUtexasEmail(email)) {
+        redirect('/signup?error=Use an email containing utexas to sign up')
+    }
 
     const { error } = await supabase.auth.signUp({
         email,

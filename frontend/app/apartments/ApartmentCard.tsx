@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { HARDCODED_UNITS_LEFT } from '@/lib/apartment-display'
 
 interface ApartmentCardProps {
   apartment: {
@@ -78,6 +79,9 @@ export default function ApartmentCard({
             className="-m-2 flex-1 rounded-lg p-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
           >
             <h2 className="text-lg font-semibold text-zinc-900">{apartment.name}</h2>
+            <p className="mt-0.5 text-xs font-medium text-zinc-600">
+              {HARDCODED_UNITS_LEFT} units left
+            </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
               <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-zinc-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-zinc-600" viewBox="0 0 20 20" fill="currentColor">
