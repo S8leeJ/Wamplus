@@ -1,0 +1,10 @@
+Extract the floor plan data from the attached Markdown. Return the data ONLY as a JSON array of objects matching this exact structure:
+
+[{"layout_name": "string", "bedrooms": "integer", "bathrooms": "integer", "price": "integer", "sq_ft": "integer", "is_studio": "boolean", "image_url": "string"}]
+
+If a value is missing on the page, use null. Do not include any conversational text.
+
+Note that "price" is the monthly installment listed.
+
+Extract EVERY SINGLE floor plan. Return the full dataset. Do not summarize, do not truncate, and do not write '...and X more'. If there are 30 floor plans, I need 30 rows.
+

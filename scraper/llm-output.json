@@ -1,0 +1,137 @@
+[
+    {
+    "layout_name": "Progressive",
+    "bedrooms": 4,
+    "bathrooms": 2,
+    "price": 975,
+    "sq_ft": 1306,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/66390385494611.91327397923.png"
+    },
+    {
+    "layout_name": "Pure",
+    "bedrooms": 4,
+    "bathrooms": 4,
+    "price": 995,
+    "sq_ft": 1472,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629596adbd692.27877821590.png"
+    },
+    {
+    "layout_name": "Versatile",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "price": 1215,
+    "sq_ft": 1034,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/66390921e0e855.87331672357.png"
+    },
+    {
+    "layout_name": "Ardent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "price": 1250,
+    "sq_ft": 1067,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6639086ac96494.25356547699.png"
+    },
+    {
+    "layout_name": "Visionary",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "price": 1250,
+    "sq_ft": 990,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6639094d70d745.04773012625.png"
+    },
+    {
+    "layout_name": "Artisan",
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "price": 1085,
+    "sq_ft": 1063,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/663909a0ba62c3.26155027685.png"
+    },
+    {
+    "layout_name": "Sophisticate SMART - A180",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "price": 1658,
+    "sq_ft": 494,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/662958b12c43f9.11347682170.png"
+    },
+    {
+    "layout_name": "Independent SMART - E180",
+    "bedrooms": null,
+    "bathrooms": 1,
+    "price": 1628,
+    "sq_ft": 467,
+    "is_studio": true,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629573200ced8.88964839345.png"
+    },
+    {
+    "layout_name": "Sophisticate SMART - A150",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 494,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629588dd09407.58632926226.png"
+    },
+    {
+    "layout_name": "Independent SMART - E150",
+    "bedrooms": null,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 467,
+    "is_studio": true,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629570013fa33.93641326217.png"
+    },
+    {
+    "layout_name": "Intellect SMART - E250",
+    "bedrooms": null,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 466,
+    "is_studio": true,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629579dcaac92.86286712484.png"
+    },
+    {
+    "layout_name": "Intellect SMART - E280",
+    "bedrooms": null,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 466,
+    "is_studio": true,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/662957cdcd9e57.46418777265.png"
+    },
+    {
+    "layout_name": "Inspire SMART",
+    "bedrooms": null,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 610,
+    "is_studio": true,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/6629575914aea6.57283477540-1.png"
+    },
+    {
+    "layout_name": "Sophisticate",
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "price": null,
+    "sq_ft": 494,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/662958386af546.08501301481.png"
+    },
+    {
+    "layout_name": "Diligent",
+    "bedrooms": 2,
+    "bathrooms": 2,
+    "price": 1218,
+    "sq_ft": 1030,
+    "is_studio": false,
+    "image_url": "https://www.axiswestcampus.com/wp-content/uploads/2024/04/663908b1612f25.58544633147.png"
+    }
+]

@@ -1,0 +1,18 @@
+apartment_id,layout_name,sq_ft,bathrooms,bedrooms,room_type,floor,windows,image_url
+70258940-c702-4105-90b1-531d9dbd3091,A1 - Sx1 The McConaughey,520,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_a1_sx1_the_mcconaughey.webp
+70258940-c702-4105-90b1-531d9dbd3091,A2 - Sx1 The Bullock,396,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_a2_sx1_the_bullock.webp
+70258940-c702-4105-90b1-531d9dbd3091,A3 - Sx1 The Vaughan,511,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_a3_sx1_the_vaughan.webp
+70258940-c702-4105-90b1-531d9dbd3091,B1 - 2x2 The Kendra,820,2,2,2 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_b1_2x2_the_kendra.webp
+70258940-c702-4105-90b1-531d9dbd3091,C1 - 3x3 The Van Zandt,1173,3,3,3 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_c1_3x3_the_van_zandt.webp
+70258940-c702-4105-90b1-531d9dbd3091,C3 - 3x3 The Wilson,1228,3,3,3 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_c3_3x3_the_wilson.webp
+70258940-c702-4105-90b1-531d9dbd3091,C4 - 3x3 The Joplin,1195,3,3,3 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_c4_3x3_the_joplin.webp
+70258940-c702-4105-90b1-531d9dbd3091,D5 - 4x3 The Durant,1334,3,4,4 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d5_4x3_the_durant.webp
+70258940-c702-4105-90b1-531d9dbd3091,D1 - 4x4 The Ehlinger,1323,4,4,4 x 4,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d1_4x4_the_ehlinger.webp
+70258940-c702-4105-90b1-531d9dbd3091,D2 - 4x4 The Mack,1407,4,4,4 x 4,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d2_4x4_the_mack.webp
+70258940-c702-4105-90b1-531d9dbd3091,D4 - 4x4 The Travis,1458,4,4,4 x 4,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d4_4x4_the_travis.webp
+70258940-c702-4105-90b1-531d9dbd3091,D6 - 4x4 The Aldridge,1537,4,4,4 x 4,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d6_4x4_the_aldridge.webp
+70258940-c702-4105-90b1-531d9dbd3091,E1 - 5x5 The Anderson,1704,5,5,5 x 5,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_e1_5x5_the_anderson.webp
+70258940-c702-4105-90b1-531d9dbd3091,B2 - 2x2 The Brees,957,2,2,2 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_b2_2x2_the_brees.webp
+70258940-c702-4105-90b1-531d9dbd3091,B4 - 2x2 The Nelson,981,2,2,2 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_b4_2x2_the_nelson.webp
+70258940-c702-4105-90b1-531d9dbd3091,C2 - 3x3 The Armstrong,1203,3,3,3 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_c2_3x3_the_armstrong.webp
+70258940-c702-4105-90b1-531d9dbd3091,D3 - 4x4 The Johnson,1490,4,4,4 x 4,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/moontower_d3_4x4_the_johnson.webp

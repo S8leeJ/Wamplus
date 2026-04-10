@@ -1,0 +1,15 @@
+apartment_id,layout_name,sq_ft,bathrooms,bedrooms,room_type,floor,windows,image_url
+e05655eb-08e5-4981-957c-e3c3128415cc,Studio SMART,437,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_studio_smart.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,Studio,563,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_studio.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,Studio Loft,558,1,1,Studio,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_studio_loft.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,1 Bed x 1 Bath,596,1,1,1 x 1,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_1_bed_x_1_bath.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,1 Bed x 1 Bath Loft,745,2,1,1 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_1_bed_x_1_bath_loft.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,1 Bed x 2 Bath Loft,745,2,1,1 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_1_bed_x_2_bath_loft.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,2 Bed x 1 Bath,836,1,2,2 x 1,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_2_bed_x_1_bath.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,2 Bed x 2 Bath,836,2,2,2 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_2_bed_x_2_bath.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,2 Bed x 2 Bath Premium,836,2,2,2 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_2_bed_x_2_bath_premium.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,2 Bed x 3 Bath Loft,998,3,2,2 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_2_bed_x_3_bath_loft.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,3 Bed x 2 Bath,977,2,3,3 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_3_bed_x_2_bath.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,3 Bed x 3 Bath Loft,1165,3,3,3 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_3_bed_x_3_bath_loft.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,4 Bed x 2 Bath,1336,2,4,4 x 2,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_4_bed_x_2_bath.webp
+e05655eb-08e5-4981-957c-e3c3128415cc,4 Bed x 3 Bath Loft,1567,3,4,4 x 3,,,https://fyqfeupyzgeksuakjtpv.supabase.co/storage/v1/object/public/images/Unit_Images/21_pearl_4_bed_x_3_bath_loft.webp
