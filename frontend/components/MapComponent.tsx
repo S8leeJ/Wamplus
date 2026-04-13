@@ -1093,9 +1093,6 @@ export default function MapComponent({
 
           {showWalkingDirections && (
           <div className="border-t border-zinc-100 px-4 pb-4 pt-3 sm:px-5">
-            <p className="text-[11px] leading-snug text-zinc-500">
-              Routes use OpenStreetMap walking paths (OSRM). Allow location if you start from “my location.” Times are a relaxed campus estimate (slower than raw OSRM).
-            </p>
 
             <button
               type="button"

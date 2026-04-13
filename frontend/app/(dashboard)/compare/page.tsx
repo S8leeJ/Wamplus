@@ -152,6 +152,7 @@ export default function ComparePage() {
       <SelectUnitsModal
         isOpen={unitsModalOpen}
         onClose={() => setUnitsModalOpen(false)}
+        onBack={() => { setUnitsModalOpen(false); setApartmentsModalOpen(true); }}
         apartmentIds={unitsModalApartments.ids}
         apartmentNames={unitsModalApartments.names}
         existingCompareKeys={existingCompareKeys}
@@ -171,7 +172,7 @@ export default function ComparePage() {
               key={f.id}
               type="button"
               onClick={() => toggleFilter(f.id)}
-              className={`shrink-0 rounded-[5px] border border-solid border-[#5c6596] px-4 py-1.5 text-sm font-medium leading-tight transition-colors ${
+              className={`shrink-0 rounded-[5px] border border-solid border-[#5c6596] px-4 py-1 text-sm font-bold leading-tight transition-colors ${
                 activeFilters[f.id]
                   ? "bg-[#5c6596] text-[#fffcf5]"
                   : "bg-white text-[#5c6596] hover:bg-[#f8f7fc]"
@@ -222,25 +223,25 @@ export default function ComparePage() {
               <p className="text-xl font-medium text-black">
                 Select floor plans to compare
               </p>
-              <p className="mt-2 text-base text-neutral-700">
+              <p className="mt-2 text-base text-neutral-500">
                 Choose a building, pick one or more units, and they will appear
                 here in a grid so you can compare specs at a glance.
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-0">
-            <div className="flex min-h-[275px] overflow-hidden rounded-[5px] border border-[#e5e0d8] border-b border-r bg-white">
+          <div className="overflow-x-auto [scrollbar-width:thin]">
+          <div className="flex min-w-max flex-col gap-0">
+            <div className="flex min-h-[275px] rounded-[5px] border border-[#e5e0d8] bg-white">
               <div
-                className={`flex shrink-0 items-center justify-center border-r border-[#e5e0d8] ${ADD_COL_W}`}
+                className={`sticky left-0 z-[1] flex shrink-0 items-center justify-center border-r border-[#e5e0d8] bg-white ${ADD_COL_W}`}
               >
                 {addUnitCard(
                   () => setApartmentsModalOpen(true),
                   "Add another unit"
                 )}
               </div>
-              <div className="min-w-0 flex-1 overflow-x-auto px-4 py-3 [scrollbar-width:thin]">
-                <div className="flex gap-8">
+              <div className="flex gap-8 px-4 py-3">
                   {compareItems.map((item) => {
                     const planLabel =
                       item.unit.layout_name?.trim() ||
@@ -310,7 +311,6 @@ export default function ComparePage() {
                     );
                   })}
                 </div>
-              </div>
             </div>
 
             {visibleFeatures.length > 0 && (
@@ -321,26 +321,25 @@ export default function ComparePage() {
                     className="flex border-b border-[#e5e0d8] bg-white"
                   >
                     <div
-                      className={`sticky left-0 z-[1] flex min-h-[83px] ${ADD_COL_W} shrink-0 items-center justify-center border-r border-[#e5e0d8] bg-white px-2 text-center text-xl font-black text-[#5c6596]`}
+                      className={`sticky left-0 z-[1] flex min-h-[52px] ${ADD_COL_W} shrink-0 items-center justify-center border-r border-[#e5e0d8] bg-white px-2 text-center text-lg font-black text-[#5c6596] [-webkit-text-stroke:0.5px_#5c6596]`}
                     >
                       {f.label}
                     </div>
-                    <div className="min-w-0 flex-1 overflow-x-auto px-4 [scrollbar-width:thin]">
-                      <div className="flex min-w-max gap-8 py-2">
-                        {compareItems.map((item) => (
-                          <div
-                            key={item.id}
-                            className={`flex min-h-[83px] ${CARD_WIDTH} shrink-0 items-center justify-center text-center text-base font-bold text-black`}
-                          >
-                            {getFeatureValue(item, f.id)}
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex gap-8 px-4 py-2">
+                      {compareItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`flex min-h-[58px] ${CARD_WIDTH} shrink-0 items-center justify-center text-center text-base font-bold text-black`}
+                        >
+                          {getFeatureValue(item, f.id)}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
           </div>
         )}
       </div>

@@ -170,8 +170,8 @@ export default function AddApartmentsModal({
                       isAlreadyFavorite
                         ? 'cursor-not-allowed border-zinc-200 bg-zinc-50 opacity-60'
                         : isSelected
-                          ? 'cursor-pointer border-zinc-800 bg-zinc-50'
-                          : 'cursor-pointer border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50'
+                          ? 'cursor-pointer border-primary-700 bg-primary-50'
+                          : 'cursor-pointer border-zinc-200 bg-white hover:bg-primary-300'
                     }`}
                   >
                     <input

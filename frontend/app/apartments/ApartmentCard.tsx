@@ -27,7 +27,7 @@ export default function ApartmentCard({
   onToggleFavorite,
 }: ApartmentCardProps) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-zinc-300">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:bg-primary-300">
       <button
         type="button"
         onClick={() => onOpen(apartment)}

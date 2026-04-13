@@ -8,6 +8,7 @@ import { getUnitsByApartmentIds } from '@/lib/cached-actions'
 interface SelectUnitsModalProps {
   isOpen: boolean
   onClose: () => void
+  onBack: () => void
   apartmentIds: string[]
   apartmentNames: Map<string, string>
   existingCompareKeys: Set<string>
@@ -40,6 +41,7 @@ function formatUnitInfo(unit: UnitWithApartment) {
 export default function SelectUnitsModal({
   isOpen,
   onClose,
+  onBack,
   apartmentIds,
   apartmentNames,
   existingCompareKeys,
@@ -118,9 +120,21 @@ export default function SelectUnitsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3">
-          <h2 id="select-units-title" className="text-lg font-semibold text-primary-900">
-             Select Units to Compare
-          </h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+              aria-label="Back to apartment selection"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <h2 id="select-units-title" className="text-lg font-semibold text-primary-900">
+              Select Units to Compare
+            </h2>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -173,7 +187,7 @@ export default function SelectUnitsModal({
                         ? 'cursor-not-allowed border-zinc-200 bg-zinc-50 opacity-60'
                         : isAdding
                           ? 'cursor-wait border-zinc-400 bg-zinc-50'
-                          : 'cursor-pointer border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50'
+                          : 'cursor-pointer border-zinc-200 bg-white hover:bg-primary-300'
                     }`}
                   >
                     <div className="aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-200">

@@ -15,19 +15,20 @@ export default function DashboardLayout({
     <div className="flex min-h-screen flex-col bg-white">
       <nav className="overflow-visible border-b border-primary-200 bg-primary-300">
         <div className="mx-auto flex min-h-14 max-w-9xl items-center justify-between gap-6 overflow-visible px-4 py-2 sm:min-h-16 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-6 sm:gap-8">
             <Link
               href="/apartments"
-              className="relative flex h-10 w-[140px] shrink-0 items-center sm:h-11 sm:w-[160px] lg:h-12 lg:w-[180px] -mr-6 sm:-mr-8 lg:-mr-10"
+              className="flex shrink-0 items-center gap-2"
             >
               <Image
                 src={logo}
-                alt="WAMP+"
-                fill
-                className="object-contain object-left"
-                sizes="(max-width: 640px) 140px, (max-width: 1024px) 160px, 180px"
+                alt="Logo"
+                width={570}
+                height={438}
+                className="h-10 w-auto sm:h-8 lg:h-9 mb-1"
                 priority
               />
+              <span className="ml-2 text-3xl font-thin text-primary-700">WAMP+</span>
             </Link>
             <NavLinks />
           </div>

@@ -408,7 +408,7 @@ export default function ApartmentDetailModal({
                     return (
                       <li
                         key={unit.id}
-                        className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-300 bg-white shadow-sm transition-all hover:border-zinc-400 hover:shadow-md"
+                        className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-300 bg-white shadow-sm transition-all hover:bg-primary-300 hover:shadow-md"
                       >
                         <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100">
                           {unit.image_url ? (
